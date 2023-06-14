@@ -1,6 +1,34 @@
 #include <stdlib.h>
 #include "lexer.h"
 
+Regex preprocRegex    = { 0, .expression = "#[[:print:]]+" };
+Regex identifierRegex = { 0, .expression = "[[:alpha:]][[:alnum:]]*" };
+Regex numberRegex     = { 0, .expression = "[[:digit:]]+" };
+Regex keywordRegex    = { 0, .expression = "auto|break|case|char|const|continue|default|do|double|else|enum|extern|float|for|goto|if|inline|int|long|register|restrict|return|short|signed|sizeof|static|struct|switch|typedef|union|unsigned|void|volatile|while|_Bool|_Complex|_Imaginary" };
+Regex whitepsaceRegex = { 0, .expression = "[ \t]" };
+Regex newlineRegex    = { 0, .expression = "\n" };
+Regex punctRegex    = { 0, .expression = "[(){};\"\"=,]" };
+
+TokenType tokenTypes[] = {
+  PREPROCESSOR,
+  IDENTIFIER,
+  NUMBER,
+  KEYWORD,
+  NEWLINE,
+  PUNCTUATION,
+  WHITESPACE
+};
+
+Regex *lexicon[] = {
+  &preprocRegex,
+  &identifierRegex,
+  &numberRegex,
+  &keywordRegex,
+  &newlineRegex,
+  &punctRegex,
+  &whitepsaceRegex
+};
+
 typedef struct {
   struct Node *children;
   int childrenCount;
@@ -24,7 +52,7 @@ int main(void) {
   printf("%s\n", buffer);
   printf("------------------------------\n");
 
-  lexer(buffer, tokens, arrIndex);
+  lexer(buffer, tokens, arrIndex, lexicon, tokenTypes);
 
   free(buffer);
 
