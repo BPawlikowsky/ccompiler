@@ -1,0 +1,344 @@
+
+primary-expression:
+<p>identifier</p>
+<p>constant</p>
+<p>string-literal</p>
+<p>( expression )</p>
+
+postfix-expression:
+<p>primary-expression</p>
+<p>postfix-expression [ expression ]</p>
+<p>postfix-expression ( argument-expression-listopt )</p>
+<p>postfix-expression . identifier</p>
+<p>postfix-expression -> identifier</p>
+<p>postfix-expression ++</p>
+<p>postfix-expression --</p>
+<p>( type-name ) { initializer-list }</p>
+<p>( type-name ) { initializer-list , }</p>
+
+argument-expression-list:
+<p>assignment-expression</p>
+<p>argument-expression-list , assignment-expression</p>
+
+unary-expression:
+<p>postfix-expression</p>
+<p>++ unary-expression</p>
+<p>-- unary-expression</p>
+<p>unary-operator cast-expression</p>
+<p>sizeof unary-expression</p>
+<p>sizeof ( type-name ) _Alignof ( type-name )</p>
+
+unary-operator:
+<p> & * + - ~ !</p>
+
+cast-expression:
+<p>unary-expression</p>
+<p>( type-name ) cast-expression</p>
+
+multiplicative-expression:
+<p>cast-expression</p>
+<p>multiplicative-expression * cast-expression</p>
+<p>multiplicative-expression / cast-expression</p>
+<p>multiplicative-expression % cast-expression</p>
+
+additive-expression:
+<p>multiplicative-expression</p>
+<p>additive-expression + multiplicative-expression</p>
+<p>additive-expression - multiplicative-expression</p>
+
+shift-expression:
+<p>additive-expression</p>
+<p>shift-expression << additive-expression</p>
+<p>shift-expression >> additive-expression</p>
+
+relational-expression:
+<p>shift-expression</p>
+<p>relational-expression < shift-expression</p>
+<p>relational-expression > shift-expression</p>
+<p>relational-expression <= shift-expression</p>
+<p>relational-expression >= shift-expression</p>
+
+equality-expression:
+<p>relational-expression</p>
+<p>equality-expression == relational-expression</p>
+<p>equality-expression != relational-expression</p>
+
+AND-expression:
+<p>equality-expression</p>
+<p>AND-expression & equality-expression</p>
+
+exclusive-OR-expression:
+<p>AND-expression</p>
+<p>exclusive-OR-expression ^ AND-expression</p>
+
+inclusive-OR-expression:
+<p>exclusive-OR-expression</p>
+<p>inclusive-OR-expression | exclusive-OR-expression</p>
+
+logical-AND-expression:
+<p>inclusive-OR-expression</p>
+<p>logical-AND-expression && inclusive-OR-expression</p>
+
+logical-OR-expression:
+<p>logical-AND-expression</p>
+<p>logical-OR-expression || logical-AND-expression</p>
+
+conditional-expression:
+<p>logical-OR-expression</p>
+<p>logical-OR-expression ? expression : conditional-expression</p>
+
+assignment-expression:
+<p>conditional-expression</p>
+<p>unary-expression assignment-operator assignment-expression</p>
+
+assignment-operator:
+<p> = *= /= %= += -= <<= >>= &= ^= |=</p>
+
+expression:
+<p>assignment-expression</p>
+<p>expression , assignment-expression</p>
+
+constant-expression:
+<p>conditional-expression</p>
+
+declaration:
+<p>declaration-specifiers attribute-seqopt init-declarator-listopt ;</p>
+<p>static_assert-declaration</p>
+
+declaration-specifiers:
+<p>storage-class-specifier declaration-specifiersopt</p>
+<p>type-specifier declaration-specifiersopt</p>
+<p>type-qualifier declaration-specifiersopt</p>
+<p>function-specifier declaration-specifiersopt</p>
+<p>alignment-specifier declaration-specifiersopt</p>
+
+attribute-seq:
+<p>attribute attribute-seqopt</p>
+
+attribute:
+<p>__asm __based __cdecl __clrcall __fastcall __inline __stdcall __thiscall __vectorcall</p>
+
+init-declarator-list:
+<p>init-declarator</p>
+<p>init-declarator-list , init-declarator</p>
+
+init-declarator:
+<p>declarator</p>
+<p>declarator = initializer</p>
+
+storage-class-specifier:
+<p>auto</p>
+<p>extern</p>
+<p>register</p>
+<p>static</p>
+<p>typedef</p>
+<p>__declspec ( extended-decl-modifier-seq )</p>
+
+extended-decl-modifier-seq:
+<p>extended-decl-modifieropt</p>
+<p>extended-decl-modifier-seq extended-decl-modifier</p>
+
+extended-decl-modifier:
+<p>naked</p>
+<p>dllimport</p>
+<p>dllexport</p>
+
+type-specifier:
+<p>void</p>
+<p>char</p>
+<p>short</p>
+<p>int</p>
+<p>__int81</p>
+<p>__int161</p>
+<p>__int321</p>
+<p>__int641</p>
+<p>long</p>
+<p>float</p>
+<p>double</p>
+<p>signed</p>
+<p>unsigned</p>
+<p>_Bool</p>
+<p>_Complex</p>
+<p>atomic-type-specifier</p>
+<p>struct-or-union-specifier</p>
+<p>enum-specifier</p>
+<p>typedef-name</p>
+
+struct-or-union-specifier:
+<p>struct-or-union identifieropt { struct-declaration-list }</p>
+<p>struct-or-union identifier</p>
+
+struct-or-union:
+<p>struct</p>
+<p>union</p>
+
+struct-declaration-list:
+<p>struct-declaration</p>
+<p>struct-declaration-list struct-declaration</p>
+
+struct-declaration:
+<p>specifier-qualifier-list struct-declarator-listopt ;</p>
+<p>static_assert-declaration</p>
+
+specifier-qualifier-list:
+<p>type-specifier specifier-qualifier-listopt</p>
+<p>type-qualifier specifier-qualifier-listopt</p>
+<p>alignment-specifier specifier-qualifier-listopt</p>
+
+struct-declarator-list:
+<p>struct-declarator</p>
+<p>struct-declarator-list , struct-declarator</p>
+
+struct-declarator:
+<p>declarator</p>
+<p>declaratoropt : constant-expression</p>
+
+enum-specifier:
+<p>enum identifieropt { enumerator-list }</p>
+<p>enum identifieropt { enumerator-list , }</p>
+<p>enum identifier</p>
+
+enumerator-list:
+<p>enumerator</p>
+<p>enumerator-list , enumerator</p>
+
+enumerator:
+<p>enumeration-constant</p>
+<p>enumeration-constant = constant-expression</p>
+
+atomic-type-specifier:
+<p>_Atomic ( type-name )</p>
+
+type-qualifier:
+<p>const</p>
+<p>restrict</p>
+<p>volatile</p>
+<p>_Atomic</p>
+
+function-specifier:
+<p>inline</p>
+<p>_Noreturn</p>
+
+alignment-specifier:
+<p>_Alignas ( type-name )</p>
+<p>_Alignas ( constant-expression )</p>
+
+declarator:
+<p>pointeropt direct-declarator</p>
+
+direct-declarator:
+<p>identifier</p>
+<p>( declarator )</p>
+<p>direct-declarator [ type-qualifier-listopt assignment-expressionopt ]</p>
+<p>direct-declarator [ static type-qualifier-listopt assignment-expression ]</p>
+<p>direct-declarator [ type-qualifier-list static assignment-expression ]</p>
+<p>direct-declarator [ type-qualifier-listopt * ]</p>
+<p>direct-declarator ( parameter-type-list )</p>
+<p>direct-declarator ( identifier-listopt )</p>
+
+pointer:
+<p>* type-qualifier-listopt</p>
+<p>* type-qualifier-listopt pointer</p>
+
+type-qualifier-list:
+<p>type-qualifier</p>
+<p>type-qualifier-list type-qualifier</p>
+
+parameter-type-list:
+<p>parameter-list</p>
+<p>parameter-list , ...</p>
+
+parameter-list:
+<p>parameter-declaration</p>
+<p>parameter-list , parameter-declaration</p>
+
+parameter-declaration:
+<p>declaration-specifiers declarator</p>
+<p>declaration-specifiers abstract-declaratoropt</p>
+
+identifier-list:
+<p>identifier</p>
+<p>identifier-list , identifier</p>
+
+type-name:
+<p>specifier-qualifier-list abstract-declaratoropt</p>
+
+abstract-declarator:
+<p>pointer</p>
+<p>pointeropt direct-abstract-declarator</p>
+
+direct-abstract-declarator:
+<p>( abstract-declarator )</p>
+<p>direct-abstract-declarator [ type-qualifier-listopt assignment-expressionopt ]</p>
+<p>direct-abstract-declarator [ static type-qualifier-listopt assignment-expression ]</p>
+<p>direct-abstract-declarator [ type-qualifier-list static assignment-expression ]</p>
+<p>direct-abstract-declarator [ type-qualifier-listopt * ]</p>
+<p>direct-abstract-declaratoropt ( parameter-type-listopt )</p>
+
+typedef-name:
+<p>identifier</p>
+
+initializer:
+<p>assignment-expression</p>
+<p>{ initializer-list }</p>
+<p>{ initializer-list , }</p>
+
+initializer-list:
+<p>designationopt initializer</p>
+<p>initializer-list , designationopt initializer</p>
+
+designation:
+<p>designator-list =</p>
+
+designator-list:
+<p>designator</p>
+<p>designator-list designator</p>
+
+designator:
+<p>[ constant-expression ]</p>
+<p>. identifier</p>
+
+static-assert-declaration:
+<p>_Static_assert ( constant-expression , string-literal ) ;</p>
+
+statement:
+<p>labeled-statement</p>
+<p>compound-statement</p>
+<p>expression-statement</p>
+<p>selection-statement</p>
+<p>iteration-statement</p>
+<p>jump-statement</p>
+
+jump-statement:
+<p>goto identifier ;</p>
+<p>continue ;</p>
+<p>break ;</p>
+<p>return expressionopt ;</p>
+
+compound-statement:
+<p>{ declaration-listopt statement-listopt }</p>
+
+declaration-list:
+<p>declaration</p>
+<p>declaration-list declaration</p>
+
+statement-list:
+<p>statement</p>
+<p>statement-list statement</p>
+
+expression-statement:
+<p>expressionopt ;</p>
+
+iteration-statement:
+<p>while ( expression ) statement</p>
+<p>do statement while ( expression ) ;</p>
+<p>for ( expressionopt ; expressionopt ; expressionopt ) statement</p>
+
+selection-statement:
+<p>if ( expression ) statement</p>
+<p>if ( expression ) statement else statement</p>
+<p>switch ( expression ) statement</p>
+
+labeled-statement:
+<p>case constant-expression : statement</p>
+

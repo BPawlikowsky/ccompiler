@@ -1,14 +1,9 @@
 #include <../../include/regex.h>
 #ifndef TOKEN
 #define TOKEN typedef enum TokenType {\
-  PREPROCESSOR = 0,\
-  IDENTIFIER,\
-  NUMBER,\
-  KEYWORD,\
-  WHITESPACE,\
-  NEWLINE,\
-  PUNCTUATION,\
-  COUNT\
+  DEF = 0,\
+  PROD,\
+  COUNT \
 } TokenType;
 #endif
 
