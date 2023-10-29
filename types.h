@@ -42,8 +42,12 @@ typedef struct Statement {
 } Statement;
 
 typedef struct Production {
+  int statementCount;
+  Statement statements[];
 } Production;
 
 typedef struct Definition {
+  int productionCount;
+  Production productions[];
 } Definition;
 
