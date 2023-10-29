@@ -32,3 +32,18 @@ typedef struct NodeListItem{
   struct NodeListItem *next;
 } NodeListItem;
 
+typedef enum StatementType {
+  TERMINAL = 0,
+  NONTERMINAL
+} StatementType;
+
+typedef struct Statement {
+  StatementType type;
+} Statement;
+
+typedef struct Production {
+} Production;
+
+typedef struct Definition {
+} Definition;
+
