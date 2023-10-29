@@ -33,6 +33,8 @@ char *parseTable[] = {
 };
 
 void loadFileToBuffer(char *path, char *bp);
+void printTokens(Token tokens[], int it);
+void trimProdStrings(Token tokens[], int it);
 
 
 int main() {
@@ -43,10 +45,35 @@ int main() {
   int tokenCount = lexer(buffer, tokens, lexicon, tokenTypes, COUNT);
   printf("Token count: %d\n", tokenCount);
   int it = 0;
+  int defCount = 0;
+  int prodCount = 0;
   while(it < tokenCount) {
-    printf("%d: %s %s\n", it, tokens[it].content, typeToString(tokens[it].type));
+    printTokens(tokens, it);
+    if(tokens[it].type == PROD) prodCount++;
+    if(tokens[it].type == DEF) defCount++;
     it++;
   }
+  printf("Definitions: %d\n", defCount);
+  printf("Productions: %d\n", prodCount);
+
+  char *defs[defCount];
+  it = 0;
+  int id = 0;
+  while(it < tokenCount) {
+    if(tokens[it].type == DEF) {
+      char *fp = strstr(tokens[it].content, ":");
+      tokens[it].content[strlen(tokens[it].content) - 1] = '\0';
+      defs[id] = tokens[it].content;
+      printTokens(tokens, it);
+      id++;
+    }
+    if(tokens[it].type == PROD) {
+      trimProdStrings(tokens, it);
+      printf("After trim: %s\n", tokens[it].content);
+    }
+    it++;
+  }
+
   return 0;
 }
 
@@ -59,4 +86,14 @@ void loadFileToBuffer(char *path, char *bp) {
     *--bp = '\0';
   }
   fclose(fp);
+}
+
+void printTokens(Token tokens[], int it) {
+  printf("%d: %s %s\n", it, tokens[it].content, typeToString(tokens[it].type));
+}
+
+void trimProdStrings(Token tokens[], int it) {
+  tokens[it].content = tokens[it].content + 3;
+  char *fp = strstr(tokens[it].content, "</p>");
+  tokens[it].content[fp - tokens[it].content] = '\0';
 }
