@@ -20,21 +20,13 @@
 *   S |       :   CR
 * */
 #include "parserGenerator.h"
-
-char *parseTable[] = {
-  "DD'",  NULL, NULL, NULL,
-  "NP'",  NULL, NULL, NULL,
-  "D",    NULL, NULL, "eps",
-  "N'",   NULL, NULL, NULL,
-  "PP'",  NULL, NULL, "eps",
-  "strS", NULL, NULL, NULL,
-  "NN'",  NULL, NULL, "eps",
-  NULL,   ":",  "CR", NULL
-};
+#include <stdlib.h>
+#include <string.h>
 
 void loadFileToBuffer(char *path, char *bp);
 void printTokens(Token tokens[], int it);
 void trimProdStrings(Token tokens[], int it);
+void addStatements(Production *prod, Token tokens[], int it);
 
 
 int main() {
@@ -43,6 +35,7 @@ int main() {
   loadFileToBuffer("./cgrammer.txt", buffer);
 
   int tokenCount = lexer(buffer, tokens, lexicon, tokenTypes, COUNT);
+  free(buffer);
   printf("Token count: %d\n", tokenCount);
   int it = 0;
   int defCount = 0;
@@ -59,17 +52,31 @@ int main() {
   char *defs[defCount];
   it = 0;
   int id = 0;
+  int ip = 0;
+  Definition *definitions = (Definition *)malloc(sizeof(Definition) * defCount);
   while(it < tokenCount) {
+    printTokens(tokens, it);
     if(tokens[it].type == DEF) {
+      printf("Start def\n");
+      // Trim definition string
       char *fp = strstr(tokens[it].content, ":");
-      tokens[it].content[strlen(tokens[it].content) - 1] = '\0';
+      tokens[it].content[fp - tokens[it].content] = '\0';
+      // Add def to definitions array
       defs[id] = tokens[it].content;
-      printTokens(tokens, it);
+      definitions[id].productionCount = 0;
+      ip = 0;
       id++;
     }
     if(tokens[it].type == PROD) {
+      printf("Start prod\n");
+      Production *prod = (Production *)malloc(sizeof(Production));
+      printf("Control prod after malloc\n");
       trimProdStrings(tokens, it);
-      printf("After trim: %s\n", tokens[it].content);
+      prod->statementCount = 0;
+      definitions[id].productions[ip] = prod;
+      addStatements(definitions[id].productions[ip], tokens, it);
+      definitions[id].productionCount++;
+      ip++;
     }
     it++;
   }
@@ -97,3 +104,39 @@ void trimProdStrings(Token tokens[], int it) {
   char *fp = strstr(tokens[it].content, "</p>");
   tokens[it].content[fp - tokens[it].content] = '\0';
 }
+
+void addStatements(Production *prod, Token tokens[], int it) {
+  char *p = tokens[it].content;
+  char *statementsLeft = tokens[it].content;
+  printf("Token: %s\n", tokens[it].content);
+  char *finish = &tokens[it].content[strlen(tokens[it].content)];
+  int is = 0;
+  while( p < finish) {
+    printf("iteration %d\n", is);
+    Statement *statement = (Statement *)malloc(sizeof(Statement));
+    assert(statement != NULL);
+    char *statementEnd = strstr(statementsLeft, " ");
+    if(statementEnd == NULL) {
+      printf("\tCHECK: strlen(%d)\n", strlen(statementsLeft));
+      statement->content = malloc(sizeof(char) * strlen(statementsLeft));
+      assert(statement->content != NULL);
+      strcpy(statement->content, statementsLeft);
+      statement->content[strlen(statementsLeft)] = '\0';
+      prod->statements[is++] = statement;
+      break;
+    }
+    long offset = statementEnd - p;
+    printf("\toffset: %d\n", offset);
+
+    statement->content = malloc(sizeof(char) * offset);
+    assert(statement->content != NULL);
+    strncpy(statement->content, statementsLeft, offset);
+    statement->content[offset] = '\0';
+    statementsLeft += offset + 1;
+    p += offset + 1;
+    prod->statements[is++] = statement;
+  }
+  prod->statementCount = is;
+  printf("\tStatements added: %s\n", tokens[it].content);
+}
+

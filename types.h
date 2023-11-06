@@ -39,15 +39,16 @@ typedef enum StatementType {
 
 typedef struct Statement {
   StatementType type;
+  char *content;
 } Statement;
 
 typedef struct Production {
   int statementCount;
-  Statement statements[];
+  Statement *statements[];
 } Production;
 
 typedef struct Definition {
   int productionCount;
-  Production productions[];
+  Production *productions[];
 } Definition;
 
