@@ -20,13 +20,12 @@
 *   S |       :   CR
 * */
 #include "parserGenerator.h"
-#include <stdlib.h>
-#include <string.h>
 
 void loadFileToBuffer(char *path, char *bp);
 void printTokens(Token tokens[], int it);
 void trimProdStrings(Token tokens[], int it);
 void addStatements(Production *prod, Token tokens[], int it);
+Definition *definitions[100];
 
 
 int main() {
@@ -53,7 +52,6 @@ int main() {
   it = 0;
   int id = 0;
   int ip = 0;
-  Definition *definitions = (Definition *)malloc(sizeof(Definition) * defCount);
   while(it < tokenCount) {
     printTokens(tokens, it);
     if(tokens[it].type == DEF) {
@@ -63,7 +61,9 @@ int main() {
       tokens[it].content[fp - tokens[it].content] = '\0';
       // Add def to definitions array
       defs[id] = tokens[it].content;
-      definitions[id].productionCount = 0;
+      Definition *definition = (Definition *) malloc(sizeof(Definition));
+      definition->productionCount = 0;
+      definitions[id] = definition;
       ip = 0;
       id++;
     }
@@ -73,9 +73,9 @@ int main() {
       printf("Control prod after malloc\n");
       trimProdStrings(tokens, it);
       prod->statementCount = 0;
-      definitions[id].productions[ip] = prod;
-      addStatements(definitions[id].productions[ip], tokens, it);
-      definitions[id].productionCount++;
+      definitions[id - 1]->productions[ip] = prod;
+      addStatements(definitions[id - 1]->productions[ip], tokens, it);
+      definitions[id - 1]->productionCount++;
       ip++;
     }
     it++;
@@ -111,14 +111,15 @@ void addStatements(Production *prod, Token tokens[], int it) {
   printf("Token: %s\n", tokens[it].content);
   char *finish = &tokens[it].content[strlen(tokens[it].content)];
   int is = 0;
+  Statement *statement = (Statement *)malloc(sizeof(Statement));
+  assert(statement != NULL);
   while( p < finish) {
     printf("iteration %d\n", is);
-    Statement *statement = (Statement *)malloc(sizeof(Statement));
-    assert(statement != NULL);
     char *statementEnd = strstr(statementsLeft, " ");
     if(statementEnd == NULL) {
-      printf("\tCHECK: strlen(%d)\n", strlen(statementsLeft));
-      statement->content = malloc(sizeof(char) * strlen(statementsLeft));
+      int strLen = strlen(statementsLeft);
+      printf("\tCHECK: strlen(%d)\n", strLen);
+      statement->content = (char *)malloc(sizeof(char) * strLen + 1);
       assert(statement->content != NULL);
       strcpy(statement->content, statementsLeft);
       statement->content[strlen(statementsLeft)] = '\0';
@@ -126,10 +127,11 @@ void addStatements(Production *prod, Token tokens[], int it) {
       break;
     }
     long offset = statementEnd - p;
-    printf("\toffset: %d\n", offset);
+    printf("\toffset: %ld\n", offset);
 
-    statement->content = malloc(sizeof(char) * offset);
+    statement->content = (char *)malloc(sizeof(char) * (int)offset + 1);
     assert(statement->content != NULL);
+
     strncpy(statement->content, statementsLeft, offset);
     statement->content[offset] = '\0';
     statementsLeft += offset + 1;

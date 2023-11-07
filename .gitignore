@@ -2,3 +2,4 @@ ccomp
 lexer
 pg
 pa
+trace-dyn-mem

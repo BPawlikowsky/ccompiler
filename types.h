@@ -44,11 +44,11 @@ typedef struct Statement {
 
 typedef struct Production {
   int statementCount;
-  Statement *statements[];
+  Statement *statements[10];
 } Production;
 
 typedef struct Definition {
   int productionCount;
-  Production *productions[];
+  Production *productions[20];
 } Definition;
 
