@@ -48,7 +48,8 @@ typedef struct Production {
 } Production;
 
 typedef struct Definition {
+  char *name;
   int productionCount;
-  Production *productions[20];
+  Production *productions[60];
 } Definition;
 
