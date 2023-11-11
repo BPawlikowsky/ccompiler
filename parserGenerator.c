@@ -20,7 +20,6 @@
 *   S |       :   CR
 * */
 #include "parserGenerator.h"
-#include <../../include/cs.h>
 
 void loadFileToBuffer(char *path, char *bp);
 void printTokens(Token tokens[], int it);
@@ -104,7 +103,9 @@ void loadFileToBuffer(char *path, char *bp) {
 }
 
 void printTokens(Token tokens[], int it) {
-  printf("%d: %s %s\n", it, tokens[it].content, typeToString(tokens[it].type));
+  char *content = tokens[it].content;
+  int type = tokens[it].type;
+  printf("%d: %s %s\n", it, content, typeToString(type));
 }
 
 void trimProdStrings(Token tokens[], int it) {

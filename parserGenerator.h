@@ -28,5 +28,6 @@ char *typeToString(int type) {
     case 1: result = "DEF";break;
     default: result = "";
   }
+  return result;
 }
 
