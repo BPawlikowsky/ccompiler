@@ -1,25 +1,5 @@
-/*
-* E -> DD'
-* D -> NP'
-* D'-> D | eps
-* P'-> PP' | eps
-* P -> N'
-* N'-> NN' | eps
-* N -> strS
-* S -> : | CR
-*
-*     | str   :   CR    $
-* -------------------------
-*   E | DD'       
-*   D | NP'
-*   D'| D              eps
-*   P | N'
-*   P'| PP'            eps
-*   N | strS
-*   N'| NN'            eps
-*   S |       :   CR
-* */
 #include "parserGenerator.h"
+#include "simpleGrammar.h"
 
 void loadFileToBuffer(char *path, char *bp);
 void printTokens(Token tokens[], int it);
@@ -29,7 +9,6 @@ void printDefs(Definition *defs[], int defCount);
 StatementType getStatementType(char *defs[], char *statement, int defCount);
 void addTypeToStatements(Definition *defs[], int defCount, char *strDefs[]);
 Definition *definitions[300];
-
 
 int main() {
   Token tokens[1000]; 

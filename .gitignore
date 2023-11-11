@@ -6,3 +6,4 @@ trace-dyn-mem
 .vscode/**
 .DS_Store
 pg.dSYM/**
+parserGenerator

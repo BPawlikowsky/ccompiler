@@ -31,7 +31,7 @@ int lexer(char *buffer,Token *tokens, Regex **lexicon, TokenType *tokenTypes, in
     }
     if(*bp == '\0') break;
     getCodeLine(bp, line);
-    printf("line no%d: %s | length: %d\n",lineCount, line, strlen(line));
+    printf("line no%d: %s | length: %d\n",lineCount, line, (int)strlen(line));
     
     for(int i = 0; i < tokenTypeCount; i++) {
       Regex *lexiconItem = lexicon[i];
