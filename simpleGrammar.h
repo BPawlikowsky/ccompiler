@@ -35,6 +35,7 @@ Production def1prod2 = {
     };
 Definition def1 = {
     .name = "E",
+    .productionCount = 2,
     .productions = { &def1prod1, &def1prod2 }
   };
 
@@ -90,6 +91,8 @@ Production def2prod3 = {
     };
 Definition def2 = {
     .name = "T",
-    .productions = { &def1prod1, &def2prod2, &def2prod3 }
+    .productionCount = 3,
+    .productions = { &def2prod1, &def2prod2, &def2prod3 }
   };
 Definition *definitions1[] = { &def1, &def2 };
+char *defs1[] = { "E", "T" };

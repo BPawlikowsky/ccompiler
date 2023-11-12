@@ -1,6 +1,11 @@
 #include "parserGenerator.h"
 #include "simpleGrammar.h"
 
+typedef struct FirstSet {
+  char **set;
+  int itemCount;
+} FirstSet; 
+
 void loadFileToBuffer(char *path, char *bp);
 void printTokens(Token tokens[], int it);
 void trimProdStrings(Token tokens[], int it);
@@ -8,6 +13,7 @@ void addStatements(Production *prod, Token tokens[], int it);
 void printDefs(Definition *defs[], int defCount);
 StatementType getStatementType(char *defs[], char *statement, int defCount);
 void addTypeToStatements(Definition *defs[], int defCount, char *strDefs[]);
+FirstSet* getFirstSet(char *defs[], Definition *definitions[], int defCount, int defIndex, char *history[], int historyCounter);
 Definition *definitions[300];
 
 int main() {
@@ -66,6 +72,15 @@ int main() {
   addTypeToStatements(definitions, defCount, defs);
 
   printDefs(definitions, defCount);
+  
+  for(int defIndex = 0; defIndex < defCount; defIndex++) {
+    printf("%d - %s\n", defIndex, definitions[defIndex]->name);
+
+    char *history[100];
+    int historyCounter = 0;
+    FirstSet *res = getFirstSet(defs, definitions, defCount, defIndex, history, historyCounter);
+    for(int i = 0; i < res->itemCount; i++) printf("res: %s\n", res->set[i]);
+  }
 
   return 0;
 }
@@ -170,8 +185,14 @@ StatementType getStatementType(char *defs[], char *statement, int defCount) {
   return TERMINAL;
 }
 
-void addTypeToStatements(Definition *defs[], int defCount, char *strDefs[]) {
+int getDefinitionIndex(char *defs[], Definition *definitions[], char *statement, int defCount) {
+  for(int i = 0; i < defCount; i++) {
+    if(strcmp(defs[i], statement) == 0) return i;
+  }
+  return -1;
+}
 
+void addTypeToStatements(Definition *defs[], int defCount, char *strDefs[]) {
   int i = 0;
   while(i < defCount) {
     int p = 0;
@@ -186,4 +207,48 @@ void addTypeToStatements(Definition *defs[], int defCount, char *strDefs[]) {
     }
     i++;
   }
+}
+
+int checkStrArr(char *arr[], int counter, char *itemToCheck) {
+  for(int i = 0; i < counter; i++) {
+    if(strcmp(arr[i], itemToCheck) == 0) return true;
+  }
+  return false;
+}
+
+int addFirstSet(char **sourceSet, char **destSet, int itemCount, int destIndex) {
+  int counter = 0;
+  int itemsAdded = 0;
+  while(counter < itemCount) {
+    if(checkStrArr(destSet, destIndex, sourceSet[counter]) == false) {
+      destSet[destIndex + counter] = sourceSet[counter];
+      itemsAdded++;
+    }
+    counter++;
+  };
+  return itemsAdded;
+}
+
+FirstSet* getFirstSet(char *defs[], Definition *definitions[], int defCount, int defIndex, char *history[], int historyCounter) {
+  char **firstSet = malloc(sizeof(char*) * 20);
+  Definition *definition = definitions[defIndex];
+  int firstSetCounter = 0;
+  for(int i = 0; i < definition->productionCount; i++) {
+    Production *prod = definition->productions[i];
+    if (prod->statements[0]->type == TERMINAL && checkStrArr(firstSet, firstSetCounter, prod->statements[0]->content) == false) {
+      firstSet[firstSetCounter++] = prod->statements[0]->content;
+    }
+    if (prod->statements[0]->type == NONTERMINAL && checkStrArr(history, historyCounter, prod->statements[0]->content) == false) {
+      history[historyCounter++] = prod->statements[0]->content;
+      int nonTermDefIndex = getDefinitionIndex(defs, definitions, prod->statements[0]->content, defCount);
+      if(nonTermDefIndex < defCount) {
+        FirstSet *nonTermFirstSet = getFirstSet(defs, definitions, defCount, nonTermDefIndex, history, historyCounter);
+        firstSetCounter += addFirstSet(nonTermFirstSet->set, firstSet, nonTermFirstSet->itemCount, firstSetCounter);
+      }
+    }
+  }
+  FirstSet *result = malloc(sizeof(FirstSet));
+  result->itemCount = firstSetCounter;
+  result->set = firstSet;
+  return result;
 }
