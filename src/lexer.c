@@ -1,16 +1,10 @@
 #include "lexer.h"
 
-
-int compileRegex(Regex **lexicon, int count);
-void copyResult(regoff_t sp, regoff_t ep, char *source, char *result);
-void freeBuffers(Token *tokens, int arrIndex, Regex **lexicon, int count);
-void getCodeLine(char *str, char *result);
-
-
-int lexer(char *buffer,Token *tokens, Regex **lexicon, TokenType *tokenTypes, int tokenTypeCount) {
+int lexer(char *buffer, Token *tokens, Regex **lexicon, TokenType *tokenTypes,
+          int tokenTypeCount) {
   int tokenCount = 0;
   char *bp = buffer;
-  int STR_LENGTH = 100;
+  int STR_LENGTH = 10000;
   char error[STR_LENGTH];
   int e;
   int offset = 0;
@@ -20,28 +14,35 @@ int lexer(char *buffer,Token *tokens, Regex **lexicon, TokenType *tokenTypes, in
 
   compileRegex(lexicon, tokenTypeCount);
 
-  while(offset < sizeOfCode && *bp != '\0') {
+  while (offset < sizeOfCode && *bp != '\0') {
     Token token;
-    char *line = malloc(160*sizeof(char));
+    char *line = malloc(160 * sizeof(char));
 
-    while(*bp == '\n') {
-      bp++;
-      offset++;
-      lineCount++;
-    }
-    if(*bp == '\0') break;
-    getCodeLine(bp, line);
-    printf("line no%d: %s | length: %d\n",lineCount, line, (int)strlen(line));
-    
-    for(int i = 0; i < tokenTypeCount; i++) {
+    // while (*bp == '\n') {
+    //   bp++;
+    //   offset++;
+    //   lineCount++;
+    // }
+    if (*bp == '\0')
+      break;
+    // getCodeLine(bp, line);
+
+    // printf("line no%d: %s | length: %d\n", lineCount, line,
+    // (int)strlen(line));
+
+    for (int i = 0; i < tokenTypeCount; i++) {
       Regex *lexiconItem = lexicon[i];
       int subExpr = lexiconItem->r.re_nsub + 1;
       regmatch_t result[subExpr];
-      if((e = regexec(&(lexiconItem->r), line, subExpr, result, execSettings)) == 0 && result[0].rm_so == 0) {
+      if ((e = regexec(&(lexiconItem->r), bp, subExpr, result, execSettings)) ==
+              0 &&
+          result[0].rm_so == 0) {
         token.type = tokenTypes[i];
         token.content = malloc(STR_LENGTH);
         copyResult(result[0].rm_so, result[0].rm_eo, bp, token.content);
+
         printf("token[%d] content: %s\n", tokenCount, token.content);
+
         tokens[tokenCount] = token;
         tokenCount++;
         offset += result[0].rm_eo - result[0].rm_so;
@@ -49,12 +50,14 @@ int lexer(char *buffer,Token *tokens, Regex **lexicon, TokenType *tokenTypes, in
         break;
       } else {
         regerror(e, &lexiconItem->r, error, STR_LENGTH);
-        printf("Regex-%d execution: %s\n",tokenCount, error);
-        printf("Line: %d | Offset: %d / %d\n", lineCount + 1, offset, sizeOfCode);
+        // printf("Regex-%d execution: %s\n", tokenCount, error);
+        // printf("Line: %d | Offset: %d / %d\n", lineCount + 1, offset,
+        //  sizeOfCode);
+        // getchar();
       }
     }
     assert(e == 0);
-    printf("-------------------------------------\n");
+    // printf("-------------------------------------\n");
     free(line);
   }
 
@@ -63,7 +66,7 @@ int lexer(char *buffer,Token *tokens, Regex **lexicon, TokenType *tokenTypes, in
 }
 
 void getCodeLine(char *str, char *result) {
-  while((*result++ = *str++) != '\n') {
+  while ((*result++ = *str++) != '\n') {
   }
   result--;
   *result = '\0';
@@ -71,7 +74,7 @@ void getCodeLine(char *str, char *result) {
 
 void copyResult(regoff_t sp, regoff_t ep, char *source, char *result) {
   int i = sp;
-  while(i < ep) {
+  while (i < ep) {
     *result++ = source[i++];
   }
   *result = '\0';
@@ -82,19 +85,20 @@ int compileRegex(Regex **lexicon, int count) {
   char error[LENGTH];
   int e;
 
-  for(int i = 0; i < count; i++) {
+  for (int i = 0; i < count; i++) {
     Regex *lexiconItem = lexicon[i];
-    e = regcomp(&(lexiconItem->r), lexiconItem->expression, REG_EXTENDED | REG_NEWLINE);
+    e = regcomp(&(lexiconItem->r), lexiconItem->expression, REG_EXTENDED);
     regerror(e, &(lexiconItem->r), error, LENGTH);
     int re_nsub = lexiconItem->r.re_nsub;
-    printf("lexicon[%d] compilation: %s re_nsub: %d expr: %s\n", i, error, re_nsub, lexiconItem->expression);
+    printf("lexicon[%d] compilation: %s re_nsub: %d expr: %s\n", i, error,
+           re_nsub, lexiconItem->expression);
   }
 
   return e;
 }
 
 void freeBuffers(Token *tokens, int arrIndex, Regex **lexicon, int count) {
-  for(int i = 0; i < count; i++) {
+  for (int i = 0; i < count; i++) {
     regfree(&(lexicon[i]->r));
   }
   printf("Lexer buffers free\n");

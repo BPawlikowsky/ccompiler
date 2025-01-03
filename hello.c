@@ -1,4 +1,7 @@
 #include <stdio.h>
+
 int main(void) {
-    printf("Hello world");
+  // int x = 10;
+  // float y = 10.0f;
+  printf("Hello world");
 }

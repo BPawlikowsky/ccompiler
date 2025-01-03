@@ -1,0 +1,17 @@
+start:
+<p>E $</p>
+
+E:
+<p>T X</p>
+
+T:
+<p>( E )</p>
+<p>int Y</p>
+
+X:
+<p>+ E</p>
+<p>epsilon</p>
+
+Y:
+<p>* T</p>
+<p>epsilon</p>

@@ -1,3 +1,5 @@
+start:
+<p>translation-unit $</p>
 
 primary-expression:
 <p>identifier</p>
@@ -6,19 +8,35 @@ primary-expression:
 <p>( expression )</p>
 
 postfix-expression:
-<p>primary-expression</p>
-<p>postfix-expression [ expression ]</p>
-<p>postfix-expression ( argument-expression-list )</p>
-<p>postfix-expression . identifier</p>
-<p>postfix-expression -> identifier</p>
-<p>postfix-expression ++</p>
-<p>postfix-expression --</p>
-<p>( type-name ) { initializer-list }</p>
-<p>( type-name ) { initializer-list , }</p>
+<p>primary-expression postfix-expression-tail</p>
+<p>( type-name postfix-helper</p>
+
+postfix-expression-helper:
+<p>) { initializer-list }</p>
+<p>) { initializer-list , }</p>
+
+postfix-expression-tail:
+<p>postfix-operator postfix-expression</p>
+<p>epsilon</p>
+
+postfix-operator:
+<p>[ expression ]</p>
+<p>( argument-expression-list )</p>
+<p>. identifier</p>
+<p>-> identifier</p>
+<p>++</p>
+<p>--</p>
+
+argument-expression-list-opt:
+<p>argument-expression-list</p>
+<p>epsilon</p>
 
 argument-expression-list:
-<p>assignment-expression</p>
-<p>argument-expression-list , assignment-expression</p>
+<p>assignment-expression argument-expression-list-tail</p>
+
+argument-expression-list-tail:
+<p>, assignment-expression argument-expression-list-tail</p>
+<p>epsilon</p>
 
 unary-expression:
 <p>postfix-expression</p>
@@ -41,56 +59,89 @@ cast-expression:
 <p>( type-name ) cast-expression</p>
 
 multiplicative-expression:
-<p>cast-expression</p>
-<p>multiplicative-expression * cast-expression</p>
-<p>multiplicative-expression / cast-expression</p>
-<p>multiplicative-expression % cast-expression</p>
+<p>cast-expression multiplicative-expression-tail</p>
+
+multiplicative-expression-tail:
+<p>* cast-expression multiplicative-expression</p>
+<p>/ cast-expression multiplicative-expression</p>
+<p>% cast-expression multiplicative-expression</p>
+<p>epsilon</p>
 
 additive-expression:
-<p>multiplicative-expression</p>
-<p>additive-expression + multiplicative-expression</p>
-<p>additive-expression - multiplicative-expression</p>
+<p>multiplicative-expression additive-expression-tail</p>
+
+additive-expression-tail:
+<p>+ multiplicative-expression additive-expression-tail</p>
+<p>- multiplicative-expression additive-expression-tail</p>
+<p>epsilon</p>
 
 shift-expression:
-<p>additive-expression</p>
-<p>shift-expression << additive-expression</p>
-<p>shift-expression >> additive-expression</p>
+<p>additive-expression shift-expression-tail</p>
+
+shift-expression-tail:
+<p><< additive-expression shift-expression-tail</p>
+<p>>> additive-expression shift-expression-tail</p>
+<p>epsilon</p>
 
 relational-expression:
-<p>shift-expression</p>
-<p>relational-expression < shift-expression</p>
-<p>relational-expression > shift-expression</p>
-<p>relational-expression <= shift-expression</p>
-<p>relational-expression >= shift-expression</p>
+<p>shift-expression relational-expression-tail</p>
+
+relational-expression-tail:
+<p>< shift-expression relational-expression-tail</p>
+<p>> shift-expression relational-expression-tail</p>
+<p><= shift-expression relational-expression-tail</p>
+<p>>= shift-expression relational-expression-tail</p>
+<p>epsilon</p>
 
 equality-expression:
-<p>relational-expression</p>
-<p>equality-expression == relational-expression</p>
-<p>equality-expression != relational-expression</p>
+<p>relational-expression equality-expression-tail</p>
+
+equality-expression-tail:
+<p>== relational-expression equality-expression-tail</p>
+<p>!= relational-expression equality-expression-tail</p>
+<p>epsilon</p>
 
 AND-expression:
-<p>equality-expression</p>
-<p>AND-expression & equality-expression</p>
+<p>equality-expression AND-expression-tail</p>
+
+AND-expression-tail:
+<p>& equality-expression AND-expression-tail</p>
+<p>epsilon</p>
 
 exclusive-OR-expression:
-<p>AND-expression</p>
-<p>exclusive-OR-expression ^ AND-expression</p>
+<p>AND-expression exclusive-OR-expression-tail</p>
+
+exclusive-OR-expression-tail:
+<p>^ AND-expression exclusive-OR-expression-tail</p>
+<p>epsilon</p>
 
 inclusive-OR-expression:
-<p>exclusive-OR-expression</p>
-<p>inclusive-OR-expression | exclusive-OR-expression</p>
+<p>exclusive-OR-expression inclusive-OR-expression-tail</p>
+
+inclusive-OR-expression-tail:
+<p>| exclusive-OR-expression inclusive-OR-expression-tail</p>
+<p>epsilon</p>
 
 logical-AND-expression:
-<p>inclusive-OR-expression</p>
-<p>logical-AND-expression && inclusive-OR-expression</p>
+<p>inclusive-OR-expression logical-AND-expression-tail</p>
+
+logical-AND-expression-tail:
+<p>&& inclusive-OR-expression logical-AND-expression-tail</p>
+<p>epsilon</p>
 
 logical-OR-expression:
-<p>logical-AND-expression</p>
-<p>logical-OR-expression || logical-AND-expression</p>
+<p>logical-AND-expression logical-OR-expression-tail</p>
+
+logical-OR-expression-tail:
+<p>|| logical-AND-expression logical-OR-expression-tail</p>
+<p>epsilon</p>
 
 conditional-expression:
-<p>logical-OR-expression</p>
-<p>logical-OR-expression ? expression : conditional-expression</p>
+<p>logical-OR-expression conditional-expression-tail</p>
+
+conditional-expression-tail:
+<p>? expression : conditional-expression</p>
+<p>epsilon</p>
 
 assignment-expression:
 <p>conditional-expression</p>
@@ -110,43 +161,48 @@ assignment-operator:
 <p>|=</p>
 
 expression:
-<p>assignment-expression</p>
-<p>expression , assignment-expression</p>
+<p>assignment-expression expression-tail</p>
+
+expression-tail:
+<p>, assignment-expression expression-tail</p>
+<p>epsilon</p>
 
 constant-expression:
 <p>conditional-expression</p>
 
 declaration:
-<p>declaration-specifiers attribute-seq init-declarator-list ;</p>
-<p>static_assert-declaration</p>
+<p>declaration-specifiers init-declarator-list-opt ;</p>
 
 declaration-specifiers:
-<p>storage-class-specifier declaration-specifiers</p>
-<p>type-specifier declaration-specifiers</p>
-<p>type-qualifier declaration-specifiers</p>
-<p>function-specifier declaration-specifiers</p>
+<p>single-specifier declaration-specifiers-tail</p>
 
-attribute-seq:
-<p>attribute attribute-seq</p>
+single-specifier:
+<p>storage-class-specifier</p>
+<p>type-specifier</p>
+<p>type-qualifier</p>
+<p>function-specifier</p>
 
-attribute:
-<p>__asm</p>
-<p>__based</p>
-<p>__cdecl</p>
-<p>__clrcall</p>
-<p>__fastcall</p>
-<p>__inline</p>
-<p>__stdcall</p>
-<p>__thiscall</p>
-<p>__vectorcall</p>
+declaration-specifiers-tail:
+<p>declaration-specifiers declaration-specifiers-tail</p>
+<p>epsilon</p>
+
+init-declarator-list-opt:
+<p>init-declarator-list</p>
+<p>epsilon</p>
 
 init-declarator-list:
-<p>init-declarator</p>
-<p>init-declarator-list , init-declarator</p>
+<p>init-declarator init-declarator-list-tail</p>
+
+init-declarator-list-tail:
+<p>, init-declarator init-declarator-list-tail</p>
+<p>epsilon</p>
 
 init-declarator:
-<p>declarator</p>
-<p>declarator = initializer</p>
+<p>declarator init-declarator-tail</p>
+
+init-declarator-tail:
+<p>= initializer</p>
+<p>epsilon</p>
 
 storage-class-specifier:
 <p>auto</p>
@@ -155,15 +211,6 @@ storage-class-specifier:
 <p>static</p>
 <p>typedef</p>
 <p>__declspec ( extended-decl-modifier-seq )</p>
-
-extended-decl-modifier-seq:
-<p>extended-decl-modifier</p>
-<p>extended-decl-modifier-seq extended-decl-modifier</p>
-
-extended-decl-modifier:
-<p>naked</p>
-<p>dllimport</p>
-<p>dllexport</p>
 
 type-specifier:
 <p>void</p>
@@ -180,16 +227,26 @@ type-specifier:
 <p>typedef-name</p>
 
 struct-or-union-specifier:
-<p>struct-or-union identifier { struct-declaration-list }</p>
-<p>struct-or-union identifier</p>
+<p>struct-or-union struct-or-union-specifier-tail</p>
+
+struct-or-union-specifier-tail:
+<p>identifier-opt { struct-declaration-list }</p>
+<p>identifier</p>
+
+identifier-opt:
+<p>identifier</p>
+<p>epsilon</p>
 
 struct-or-union:
 <p>struct</p>
 <p>union</p>
 
 struct-declaration-list:
-<p>struct-declaration</p>
-<p>struct-declaration-list struct-declaration</p>
+<p>struct-declaration struct-declaration-list-tail</p>
+
+struct-declaration-list-tail:
+<p>struct-declaration struct-declaration-list-tail</p>
+<p>epsilon</p>
 
 struct-declaration:
 <p>specifier-qualifier-list struct-declarator-list ;</p>
@@ -200,12 +257,18 @@ specifier-qualifier-list:
 <p>type-qualifier specifier-qualifier-list</p>
 
 struct-declarator-list:
-<p>struct-declarator</p>
-<p>struct-declarator-list , struct-declarator</p>
+<p>struct-declarator struct-declarator-list-tail</p>
+
+struct-declarator-list-tail:
+<p>, struct-declarator struct-declarator-list-tail</p>
+<p>epsilon</p>
 
 struct-declarator:
-<p>declarator</p>
-<p>declarator : constant-expression</p>
+<p>declarator struct-declarator-tail</p>
+
+struct-declarator-tail:
+<p>: constant-expression</p>
+<p>epsilon</p>
 
 enum-specifier:
 <p>enum identifier { enumerator-list }</p>
@@ -213,8 +276,11 @@ enum-specifier:
 <p>enum identifier</p>
 
 enumerator-list:
-<p>enumerator</p>
-<p>enumerator-list , enumerator</p>
+<p>enumerator enumerator-list-tail</p>
+
+enumerator-list-tail:
+<p>, enumerator enumerator-list-tail</p>
+<p>epsilon</p>
 
 enumerator:
 <p>enumeration-constant</p>
@@ -233,79 +299,115 @@ declarator:
 <p>pointer direct-declarator</p>
 
 direct-declarator:
-<p>identifier</p>
-<p>( declarator )</p>
-<p>direct-declarator [ type-qualifier-list assignment-expression ]</p>
-<p>direct-declarator [ static type-qualifier-list assignment-expression ]</p>
-<p>direct-declarator [ type-qualifier-list static assignment-expression ]</p>
-<p>direct-declarator [ type-qualifier-list * ]</p>
-<p>direct-declarator ( parameter-type-list )</p>
-<p>direct-declarator ( identifier-list )</p>
+<p>identifier direct-declarator-tail</p>
+<p>( declarator ) direct-declarator-tail</p>
+
+direct-declarator-tail:
+<p>[ direct-declarator-helper-square</p>
+<p>( direct-declarator-helper-round</p>
+<p>epsilon</p>
+
+direct-declarator-helper-square:
+<p>type-qualifier-list direct-declarator-helper-square-lists</p>
+<p>static type-qualifier-list assignment-expression ] direct-declarator-tail</p>
+
+direct-declarator-helper-square-lists:
+<p>assignment-expression ] direct-declarator-tail</p>
+<p>static assignment-expression ] direct-declarator-tail</p>
+<p>* ] direct-declarator-tail</p>
+
+direct-declarator-helper-round:
+<p>parameter-type-list ) direct-declarator-tail</p>
+<p>identifier-list ) direct-declarator-tail</p>
 
 pointer:
 <p>* type-qualifier-list</p>
 <p>* type-qualifier-list pointer</p>
 
 type-qualifier-list:
-<p>type-qualifier</p>
-<p>type-qualifier-list type-qualifier</p>
+<p>type-qualifier type-qualifier-list-tail</p>
+
+type-qualifier-list-tail:
+<p>type-qualifier type-qualifier-list-tail</p>
+<p>epsilon</p>
 
 parameter-type-list:
-<p>parameter-list</p>
-<p>parameter-list , ...</p>
+<p>parameter-list parameter-type-list-tail</p>
+
+parameter-type-list-tail:
+<p>, parameter-list parameter-type-list-tail</p>
+<p>epsilon</p>
 
 parameter-list:
-<p>parameter-declaration</p>
-<p>parameter-list , parameter-declaration</p>
+<p>parameter-declaration parameter-list-tail</p>
+
+parameter-list-tail:
+<p>, parameter-declaration parameter-list-tail</p>
+<p>epsilon</p>
 
 parameter-declaration:
 <p>declaration-specifiers declarator</p>
 <p>declaration-specifiers abstract-declarator</p>
 
 identifier-list:
-<p>identifier</p>
-<p>identifier-list , identifier</p>
+<p>identifier identifier-list-tail</p>
+
+identifier-list-tail:
+<p>, identifier identifier-list-tail</p>
+<p>epsilon</p>
 
 type-name:
-<p>specifier-qualifier-list abstract-declarator</p>
+<p>specifier-qualifier-list abstract-declarator-tail</p>
 
 abstract-declarator:
 <p>pointer</p>
 <p>pointer direct-abstract-declarator</p>
 
 direct-abstract-declarator:
-<p>( abstract-declarator )</p>
-<p>direct-abstract-declarator [ type-qualifier-list assignment-expression ]</p>
-<p>direct-abstract-declarator [ static type-qualifier-list assignment-expression ]</p>
-<p>direct-abstract-declarator [ type-qualifier-list static assignment-expression ]</p>
-<p>direct-abstract-declarator [ type-qualifier-list * ]</p>
-<p>direct-abstract-declarator ( parameter-type-list )</p>
+<p>( abstract-declarator ) abstract-declarator-tail</p>
+
+abstract-declarator-tail:
+<p>direct-abstract-declarator [ type-qualifier-list abstract-declarator-tail-helper</p>
+<p>direct-abstract-declarator [ static type-qualifier-list assignment-expression ] abstract-declarator-tail</p>
+<p>direct-abstract-declarator ( parameter-type-list ) abstract-declarator-tail</p>
+<p>epsilon</p>
+
+abstract-declarator-tail-helper:
+<p>assignment-expression ] abstract-declarator-tail</p>
+<p>static assignment-expression ] abstract-declarator-tail</p>
+<p>* ] abstract-declarator-tail</p>
 
 typedef-name:
 <p>identifier</p>
 
 initializer:
 <p>assignment-expression</p>
-<p>{ initializer-list }</p>
-<p>{ initializer-list , }</p>
+<p>{ initializer-list initializer-helper</p>
+
+initializer-helper:
+<p>}</p>
+<p>, }</p>
 
 initializer-list:
-<p>designation initializer</p>
-<p>initializer-list , designation initializer</p>
+<p>designation initializer initializer-list-tail</p>
+
+initializer-list-tail:
+<p>, designation initializer initializer-list-tail</p>
+<p>epsilon</p>
 
 designation:
 <p>designator-list =</p>
 
 designator-list:
-<p>designator</p>
-<p>designator-list designator</p>
+<p>designator designator-list-tail</p>
+
+designator-list-tail:
+<p>designator designator-list-tail</p>
+<p>epsilon</p>
 
 designator:
 <p>[ constant-expression ]</p>
 <p>. identifier</p>
-
-static-assert-declaration:
-<p>_Static_assert ( constant-expression , string-literal ) ;</p>
 
 statement:
 <p>labeled-statement</p>
@@ -325,12 +427,18 @@ compound-statement:
 <p>{ declaration-list statement-list }</p>
 
 declaration-list:
-<p>declaration</p>
-<p>declaration-list declaration</p>
+<p>declaration declaration-list-tail</p>
+
+declaration-list-tail:
+<p>statement declaration-list-tail</p>
+<p>epsilon</p>
 
 statement-list:
-<p>statement</p>
-<p>statement-list statement</p>
+<p>statement statement-list-tail</p>
+
+statement-list-tail:
+<p>statement statement-list-tail</p>
+<p>epsilon</p>
 
 expression-statement:
 <p>expression ;</p>
@@ -341,9 +449,34 @@ iteration-statement:
 <p>for ( expression ; expression ; expression ) statement</p>
 
 selection-statement:
-<p>if ( expression ) statement</p>
-<p>if ( expression ) statement else statement</p>
+<p>if ( expression ) statement selection-statement-helper</p>
 <p>switch ( expression ) statement</p>
+
+selection-statement-helper:
+<p>else statement</p>
+<p>epsilon</p>
 
 labeled-statement:
 <p>case constant-expression : statement</p>
+
+translation-unit:
+<p>external-declaration translation-unit-tail</p>
+
+translation-unit-tail:
+<p>translation-unit</p>
+<p>epsilon</p>
+
+external-declaration:
+<p>function-definition</p>
+<p>declaration</p>
+
+function-definition:
+<p>declaration-specifiers-opt declarator declaration-list-opt compound-statement</p>
+
+declaration-specifiers-opt:
+<p>declaration-specifiers</p>
+<p>epsilon</p>
+
+declaration-list-opt:
+<p>declaration-list</p>
+<p>epsilon</p>
