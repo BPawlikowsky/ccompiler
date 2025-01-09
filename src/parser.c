@@ -46,7 +46,7 @@ ParsingTable *loadParsingTable() {
   FILE *file = fopen("nonterminals.txt", "r");
   ptp->nonterminals = malloc(sizeof(char *) * ptp->nonterminalCount);
   for (int i = 0; i < ptp->nonterminalCount; i++) {
-    char *result = malloc(sizeof(char) * 30);
+    char *result = malloc(sizeof(char) * 50);
     fscanf(file, "%s\n", result);
     ptp->nonterminals[i] = result;
   }
@@ -55,7 +55,7 @@ ParsingTable *loadParsingTable() {
   file = fopen("terminals.txt", "r");
   ptp->terminals = malloc(sizeof(char *) * ptp->terminalCount);
   for (int i = 0; i < ptp->terminalCount; i++) {
-    char *result = malloc(sizeof(char) * 30);
+    char *result = malloc(sizeof(char) * 50);
     fscanf(file, "%s\n", result);
     ptp->terminals[i] = result;
   }
@@ -88,40 +88,24 @@ ParsingTable *loadParsingTable() {
   return ptp;
 }
 
-int getNonTerminalIndex(char *nonterminal, ParsingTable *table) {
-  for (int i = 0; i < table->nonterminalCount; i++) {
-    if (strcmp(nonterminal, table->nonterminals[i]) == 0) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-int getTerminalIndex(char *terminal, ParsingTable *table) {
-  for (int i = 0; i < table->terminalCount; i++) {
-    if (strcmp(terminal, table->terminals[i]) == 0) {
-      return i;
-    }
-  }
-  return -1;
-}
-
 int main(void) {
   ParsingTable *parsingTable = loadParsingTable();
-  Token tokens[1000];
+  Token tokens[10000];
   char *buffer = (char *)malloc(2000 * sizeof(char));
-  loadFileToBuffer("hello.c", buffer);
+  loadFileToBuffer("test.c", buffer);
 
-  int tokenCount = lexer(buffer, tokens, lexicon, tokenTypes, COUNT);
+  int tokenCount = lexer(buffer, tokens, arr_c_lexicon, arr_c_token_types,
+                         C_TOKEN_TYPES_COUNT);
   free(buffer);
-  printf("Token count: %d\n", tokenCount);
+  log_trace("Token count: %d", tokenCount);
 
   char **stack = malloc(sizeof(char *) * tokenCount * tokenCount);
   stack[0] = "$";
   stack[1] = "start";
 
-  int stackCounter = 2;
+  int stackCounter = 1;
   int tokenCounter = 0;
+  int errorCount = 0;
 
   Token *endToken = malloc(sizeof(Token));
   endToken->content = "$";
@@ -129,88 +113,146 @@ int main(void) {
   tokens[tokenCount++] = *endToken;
 
   while (stackCounter > 0) {
-    printf("\n\n");
-    printf("stackCounter: %d\n", stackCounter);
-    int currentStackIndex = stackCounter - 1;
-    char *topStackItem = stack[currentStackIndex];
+    log_debug("--------------------------------------------------------");
+    log_debug("--------------------------------------------------------");
+
+    char stack_output[2000] = "";
+    sprintf(stack_output, "%sstackCounter: %d, stack: ", stack_output,
+            stackCounter);
+    for (int i = 0; i < stackCounter; i++) {
+      sprintf(stack_output, "%s\"%s\"", stack_output, stack[i]);
+      if (i != stackCounter - 1) {
+        sprintf(stack_output, "%s, ", stack_output);
+      }
+    }
+    log_debug("%s", stack_output);
+
+    char *topStackItem = stack[stackCounter];
     TokenType topItemType = getItemTokenType(topStackItem, parsingTable);
     Token token = tokens[tokenCounter];
     char *tokenString = token.content;
 
-    printf("Parsing token no. %d: \"%s\"\n", tokenCounter, token.content);
+    log_debug("Parsing token no. %d: \"%s\" of type %s", tokenCounter,
+              token.content, arr_c_token_type_strings[token.type]);
+    char prev_output[2000] = "";
+    sprintf(prev_output, "%sPrevious 10 tokens: \"", prev_output);
+    for (int i = (tokenCounter - 10 >= 0) ? tokenCounter - 10 : tokenCounter;
+         i < tokenCounter; i++) {
+      if (tokens[i].type == NEWLINE) {
+        sprintf(prev_output, "%snewline ", prev_output);
+      } else if (tokens[i].type == WHITESPACE) {
+        sprintf(prev_output, "%swhitespace ", prev_output);
+      } else {
+        sprintf(prev_output, "%s%s ", prev_output, tokens[i].content);
+      }
+    }
+    log_debug("%s", prev_output);
+
+    char next_output[2000] = "";
+    sprintf(next_output, "%sNext 10 tokens: \"", next_output);
+    for (int i = tokenCounter; i < tokenCounter + 10; i++) {
+      if (tokens[i].type == NEWLINE) {
+        sprintf(next_output, "%snewline ", next_output);
+      } else if (tokens[i].type == WHITESPACE) {
+        sprintf(next_output, "%swhitespace ", next_output);
+      } else {
+        sprintf(next_output, "%s%s ", next_output, tokens[i].content);
+      }
+    }
+    log_debug("%s", next_output);
 
     if (token.type == IDENTIFIER) {
       tokenString = "identifier";
     }
 
+    if (token.type == STRING) {
+      tokenString = "string_literal";
+    }
+
+    if (token.type == INTEGER_CONST || token.type == FLOAT_CONST ||
+        token.type == CHAR) {
+      tokenString = "constant";
+    }
+
     if (token.type == MULTILINE_COMMENT || token.type == SINGLELINE_COMMENT ||
         token.type == PREPROCESSOR || token.type == NEWLINE ||
         token.type == WHITESPACE) {
-      printf("Ignoring token of type %s\n", tokenTypeStrings[token.type]);
+      log_debug("Ignoring token of type %s",
+                arr_c_token_type_strings[token.type]);
       tokenCounter++;
       continue;
     }
 
+    log_debug("Stack item \'%s\' of type: %s", topStackItem,
+              topItemType == NONTERMINAL ? "NONTERMINAL" : "TERMINAL");
+
     switch (topItemType) {
     case NONTERMINAL: {
-      printf("case NONTERMINAL\n");
+      log_debug("case NONTERMINAL");
 
-      printf("row: \"%s\", col: \"%s\"\n", stack[currentStackIndex],
-             tokenString);
-      int col = getTerminalIndex(tokenString, parsingTable);
-      int row = getNonTerminalIndex(stack[currentStackIndex], parsingTable);
+      int col = getTerminalIndexFromIndex(parsingTable, tokenString);
+      int row = getNonTerminalIndexFromIndex(parsingTable, stack[stackCounter]);
 
-      printf("token type: %s, token content: \"%s\", row: %d, col: %d\n",
-             tokenTypeStrings[token.type], tokenString, row, col);
-      printf("Current stack item: %s\n", stack[currentStackIndex]);
+      log_debug("Column: %d | token type: %s, token content: \"%s\"", col,
+                arr_c_token_type_strings[token.type], tokenString);
+      log_debug("Row: %d | Current stack item: %s", row, stack[stackCounter]);
 
       int tableIndex = (row * parsingTable->terminalCount) + col;
-      printf("tableIndex: (%d * %d) + %d = %d\n", row,
-             parsingTable->terminalCount, col, tableIndex);
+      log_debug("tableIndex: (%d * %d) + %d = %d", row,
+                parsingTable->terminalCount, col, tableIndex);
       TableEntry *entry = parsingTable->table[tableIndex];
 
-      printf("entry no. %d, { error: %s }\n", tableIndex,
-             entry->error == true ? "true" : "false");
+      log_debug("entry no. %d, { error: %s }", tableIndex,
+                entry->error == true ? "true" : "false");
 
       if (entry->error == false) {
-        printf("Starting to add items to stack...\n");
-        printf("statementCount: %d\n", entry->production->statementCount);
+        log_debug("Starting to add items to stack...");
+        log_debug("statementCount: %d", entry->production->statementCount);
 
         /* POP STUFF OFF THE STACK */
         stackCounter--;
 
         Production *prod = entry->production;
         for (int i = prod->statementCount - 1; i >= 0; i--) {
-          // for (int i = 0; i < prod->statementCount; i++) {
           Statement *statement = prod->statements[i];
 
           if (strcmp(statement->content, "epsilon") == 0) {
+            log_trace("Epsilon, popping stack.");
+            stackCounter--;
             continue;
           }
 
-          printf("Pushing \"%s\" to stack.\n", statement->content);
+          log_debug("Pushing \"%s\" to stack.", statement->content);
 
-          stack[stackCounter++] = statement->content;
+          stack[++stackCounter] = statement->content;
         }
       } else {
-        printf("error\n");
-        return 0;
+        log_debug("Error popping \'%s\' off the stack!", stack[stackCounter]);
+        if (stackCounter <= 0) {
+          log_debug("Error: stack is empty and no $ symbol is there.");
+          return 0;
+        }
+        stackCounter--;
       }
     }; break;
     case TERMINAL: {
-      printf("case TERMINAL\n");
-      printf("Comparing \"%s\" to \"%s\"\n", tokenString,
-             stack[currentStackIndex]);
-      if (strcmp(tokenString, stack[currentStackIndex]) == 0) {
-        printf("popping stack.\n");
+      log_debug("case TERMINAL");
+      log_debug("Comparing \"%s\" to \"%s\"", tokenString, stack[stackCounter]);
+      if (strcmp(tokenString, stack[stackCounter]) == 0) {
+        log_debug("popping \'%s\' off the stack.", stack[stackCounter]);
         /* POP STUFF OFF THE STACK */
         stackCounter--;
         if (tokenCounter < tokenCount - 1) {
           tokenCounter++;
         }
       } else {
-        printf("error\n");
-        return 0;
+        log_debug("Error popping \'%s\' off the stack!", stack[stackCounter]);
+        if (stackCounter <= 0) {
+          log_debug("Error: stack is empty and no $ symbol is there.");
+          log_error("Error, could not parse stack!");
+          exit(EXIT_FAILURE);
+        }
+        stackCounter--;
       }
     } break;
 
@@ -219,11 +261,12 @@ int main(void) {
     }
   }
 
-  printf("Stack counter at %d\n", stackCounter);
+  log_debug("Stack counter at %d", stackCounter);
   return 0;
 }
 
 int getItemTokenType(char *item, ParsingTable *table) {
+  log_trace("Getting token type of %s", item);
   for (int i = 0; i < table->nonterminalCount; i++) {
     if (strcmp(item, table->nonterminals[i]) == 0) {
       return NONTERMINAL;
@@ -234,5 +277,7 @@ int getItemTokenType(char *item, ParsingTable *table) {
       return TERMINAL;
     }
   }
+
+  log_error("Error: Parser, could not get token type of %s.", item);
   return -1;
 }

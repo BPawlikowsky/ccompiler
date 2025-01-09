@@ -11,79 +11,81 @@
     add follow set of A to set.
 */
 
+int previousIndex = 0;
+
+typedef struct {
+  int *arr;
+  int counter;
+} FollowSetIndexes;
+
+void add_follow_set_index(FollowSetIndexes *indexes, int index) {
+  for (int i = 0; i < indexes->counter; i++) {
+    if (indexes->arr[i] == index) {
+      log_debug("Duplicate of index %d", index);
+      return;
+    }
+  }
+
+  log_debug("Index %d added", index);
+  indexes->arr[indexes->counter++] = index;
+}
+
 FollowSet *getFollowSet(int defIndex, GeneratorState *state) {
+  log_trace("FollowSet(%d): Previous index: %d", defIndex, previousIndex);
+  previousIndex = defIndex;
+
+  int arr[100];
+
+  FollowSetIndexes follow_set_indexes = {.arr = arr, .counter = 0};
+
+  FollowSetHistory *follow_set_history = state->follow_set_history;
+
+  // HANDLE REPEATING OPERATIONS
+  if (isItemInHistory(state, defIndex, FOLLOWSET)) {
+    return follow_set_history->arr_sets[defIndex];
+  }
+
   FollowSet *result = malloc(sizeof(FollowSet));
-  char **set = malloc(sizeof(char *) * 100);
+  char **set = malloc(sizeof(char *) * 200);
   result->itemCount = 0;
   result->set = set;
 
   Definition *definition = state->definitions[defIndex];
 
-  // printf("\nEntering getFollowSet(%s)\n", definition->name);
-
-  if (isItemInHistory(state, definition->name)) {
-    if (isItemInHistoryWithFollowSetCreated(state, definition->name)) {
-      int foundDefIndex = getDefinitionIndex(state, definition->name);
-      assert(foundDefIndex > -1);
-
-      if (foundDefIndex < 0) {
-        printf("index less than 0, foundDefIndex\n");
-      }
-
-      return state->followSets[foundDefIndex];
-    }
-  }
-
-  // ADD CURRENT DEFINITION TO HISTORY
-  History *item = malloc(sizeof(History));
-  item->item = definition->name;
-  item->isFollowSetCreated = false;
-  state->history[state->historyCounter++] = item;
-
   for (int i = 0; i < state->defCount; i++) {
+    if (i == defIndex) {
+      continue;
+    }
+
     for (int p = 0; p < state->definitions[i]->productionCount; p++) {
+      Production *production = state->definitions[i]->productions[p];
       // GET INDEX OF CURRENT DEFINITION IN PRODUCTION
       int statementIndex = getStatementIndexFromProduction(
           definition, state->definitions[i]->productions[p]);
 
-      // IF DEFINITION IS NOT IN PRODUCION, SKIP
+      // IF DEFINITION IS NOT IN PRODUCION, OR IS THE SAME AS INVOKED
+      // DEFINITION, SKIP
       if (statementIndex < 0) {
         continue;
       }
 
-      Production *production = state->definitions[i]->productions[p];
-
       for (int s = statementIndex; s < production->statementCount; s++) {
         Statement *nextStatement = production->statements[s + 1];
 
-        // IF ONLY ONE STATEMENT IN PRODUCTION,
-        // ADD FOLLOW OF DEFINITION
         if (s + 1 == production->statementCount) {
-          saveFollowSet(result, state, definition->name);
-          FollowSet *followSetResult = getFollowSet(i, state);
-
-          for (int j = 0; j < followSetResult->itemCount; j++) {
-            if (doesStringExistInArray(set, result->itemCount,
-                                       followSetResult->set[j]) == false &&
-                strcmp(followSetResult->set[j], "epsilon") != 0) {
-              set[result->itemCount++] = followSetResult->set[j];
-            }
-          }
-
-          // printf("Added follow set of %s\n", state->definitions[i]->name);
-          continue;
+          break;
         }
 
         // IF NEXT STATEMENT IS A TERMINAL,
         // ADD TO SET, AND GO TO NEXT PRODUCTION
         if (nextStatement->type == TERMINAL) {
-          if (doesStringExistInArray(set, result->itemCount,
-                                     nextStatement->content) == false &&
-              strcmp(nextStatement->content, "epsilon") != 0) {
-            set[result->itemCount++] = nextStatement->content;
-            // printf("\nAdded terminal \"%s\"\n", nextStatement->content);
+          char *content = nextStatement->content;
+          if (doesStringExistInArray(set, result->itemCount, content) ==
+                  false &&
+              strcmp(content, "epsilon") != 0) {
+            addSingleItemToFollowSet(content, result);
           }
-          break;
+          continue;
         }
 
         if (nextStatement->type == NONTERMINAL) {
@@ -91,73 +93,58 @@ FollowSet *getFollowSet(int defIndex, GeneratorState *state) {
 
           assert(newDefIndex > -1);
           if (newDefIndex < 0) {
-            printf("index less than 0, newDefIndex\n");
+            log_error("FollowSet(%d): could not find non-terminal \'%s\'.",
+                      defIndex, nextStatement->content);
           }
 
           FirstSet *firstSet = state->firstSets[newDefIndex];
 
-          for (int j = 0; j < firstSet->itemCount; j++) {
-            if (doesStringExistInArray(set, result->itemCount,
-                                       firstSet->set[j]) == false &&
-                strcmp(firstSet->set[j], "epsilon") != 0) {
-              set[result->itemCount++] = firstSet->set[j];
-            }
-          }
+          // ADD FIRST SET
+          addFirstSetToSet(firstSet, result);
 
-          // printf("\nAdded first set of %s\n",
-          //  state->definitions[newDefIndex]->name);
+          bool hasEpsilon = doesSetContainEpsilon(firstSet);
 
-          // IF NONTERMINAL'S FIRST SET DOES CONTAIN EPSILON,
-          // SKIP
-          if (doesSetContainEpsilon(firstSet) &&
-              s + 1 < production->statementCount - 1) {
-            // printf("\nFirst set of %s contains epsilon, skipping
-            // statement\n",
-            //        state->definitions[newDefIndex]->name);
+          if (!hasEpsilon) {
             continue;
           }
-
-          // IF NEXT STATEMENT IS THE LAST STATEMENT ADD FOLLOW SET OF
-          // I-DEFINITION TO SET
-          if (doesSetContainEpsilon(firstSet) == false &&
-              s + 1 == production->statementCount - 1) {
-            saveFollowSet(result, state, definition->name);
-            FollowSet *followSetResult = getFollowSet(i, state);
-
-            for (int j = 0; j < followSetResult->itemCount; j++) {
-              if (doesStringExistInArray(set, result->itemCount,
-                                         followSetResult->set[j]) == false) {
-                set[result->itemCount++] = followSetResult->set[j];
-              }
-            }
-
-            // printf("Added follow set of %s\n", state->definitions[i]->name);
-          }
         }
+      }
+
+      if (statementIndex == production->statementCount - 1 ||
+          canAllDeriveEpsilon(production, statementIndex + 1, state)) {
+        add_follow_set_index(&follow_set_indexes, i);
       }
     }
   }
 
-  saveFollowSet(result, state, definition->name);
+  // ADD CURRENT DEFINITION TO HISTORY
+  follow_set_history->arr_sets[defIndex] = result;
+
+  log_debug("Follow set indexes count: %d", follow_set_indexes.counter);
+  for (int i = 0; i < follow_set_indexes.counter; i++) {
+    saveFollowSet(result, state, defIndex);
+    FollowSet *followSetResult;
+    followSetResult = getFollowSet(follow_set_indexes.arr[i], state);
+
+    addFollowSetToSet(followSetResult, result);
+  }
+
+  if (result->itemCount == 0) {
+    log_error("Error: FollowSet(%d) \'%s\' is empty.", defIndex,
+              definition->name);
+    assert(result->itemCount > 0);
+  }
+
+  log_trace("Added Follow set(%d) created for %s", defIndex, definition->name);
+
+  saveFollowSet(result, state, defIndex);
   state->followSetCounter++;
   return result;
 }
 
-void saveFollowSet(FollowSet *followSet, GeneratorState *state,
-                   char *definitionName) {
-  int newDefIndex = getDefinitionIndex(state, definitionName);
-
-  if (newDefIndex < 0) {
-    printf("index less than 0, newDefIndex\n");
-  }
-
-  state->followSets[newDefIndex] = followSet;
-
-  for (int i = 0; i < state->historyCounter; i++) {
-    if (strcmp(definitionName, state->history[i]->item) == 0) {
-      state->history[i]->isFollowSetCreated = true;
-    }
-  }
+void saveFollowSet(FollowSet *followSet, GeneratorState *state, int defIndex) {
+  state->follow_set_history->arr_sets[defIndex] = followSet;
+  state->followSets[defIndex] = followSet;
 }
 
 int getStatementIndexFromProduction(Definition *definition,
@@ -170,4 +157,50 @@ int getStatementIndexFromProduction(Definition *definition,
   }
 
   return -1;
+}
+
+void addFollowSetToSet(FollowSet *followSet, FollowSet *result) {
+  for (int j = 0; j < followSet->itemCount; j++) {
+    char *content = followSet->set[j];
+    if (doesStringExistInArray(result->set, result->itemCount, content) ==
+        false) {
+      addSingleItemToFollowSet(content, result);
+    }
+  }
+}
+
+void addFirstSetToSet(FirstSet *firstSet, FollowSet *result) {
+  for (int j = 0; j < firstSet->itemCount; j++) {
+    char *content = firstSet->set[j];
+    if (doesStringExistInArray(result->set, result->itemCount, content) ==
+            false &&
+        strcmp(content, "epsilon")) {
+      addSingleItemToFollowSet(content, result);
+    }
+  }
+}
+
+void addSingleItemToFollowSet(char *content, FollowSet *result) {
+  result->set[result->itemCount] = malloc(sizeof(char) * strlen(content));
+  result->set[result->itemCount++] = content;
+}
+
+// New helper function to check if all symbols in a sequence can derive epsilon
+bool canAllDeriveEpsilon(Production *production, int startIndex,
+                         GeneratorState *state) {
+  for (int i = startIndex; i < production->statementCount; i++) {
+    Statement *stmt = production->statements[i];
+
+    if (stmt->type == TERMINAL) {
+      if (strcmp(stmt->content, "epsilon") != 0) {
+        return false;
+      }
+    } else {
+      int defIndex = getDefinitionIndex(state, stmt->content);
+      if (defIndex < 0 || !doesSetContainEpsilon(state->firstSets[defIndex])) {
+        return false;
+      }
+    }
+  }
+  return true;
 }

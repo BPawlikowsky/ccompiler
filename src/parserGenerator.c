@@ -3,11 +3,12 @@
 int main() {
   Token tokens[1000];
   char *buffer = (char *)malloc(20000 * sizeof(char));
-  loadFileToBuffer("./cgrammer.txt", buffer);
+  loadFileToBuffer("./c89_mod.txt", buffer);
 
-  int tokenCount = lexer(buffer, tokens, lexicon, tokenTypes, COUNT);
+  int tokenCount =
+      lexer(buffer, tokens, lexicon, tokenTypes, TOKEN_TYPES_COUNT);
   free(buffer);
-  printf("Token count: %d\n", tokenCount);
+  log_info("Token count: %d", tokenCount);
 
   // Count definitions and productions
   int it = 0;
@@ -22,11 +23,11 @@ int main() {
     it++;
   }
 
-  printf("Definitions: %d\n", defCount);
-  printf("Productions: %d\n", prodCount);
+  log_info("Definitions: %d", defCount);
+  log_info("Productions: %d", prodCount);
 
   // Parse definitions and productions
-  Definition **definitions = malloc(sizeof(Definition *) * 300);
+  Definition **definitions = malloc(sizeof(Definition *) * defCount);
 
   char *defs[defCount];
   it = 0;
@@ -43,7 +44,8 @@ int main() {
       // Add def to definitions array
       defs[id] = tokens[it].content;
       Definition *definition = malloc(sizeof(Definition));
-      definition->productions = malloc(sizeof(Production) * 100);
+      definition->productions = malloc(sizeof(Production) * prodCount);
+
       definition->name = tokens[it].content;
       definition->productionCount = 0;
       definitions[id] = definition;
@@ -54,8 +56,10 @@ int main() {
     if (tokens[it].type == PROD) {
       Production *prod = malloc(sizeof(Production));
       prod->statements = malloc(sizeof(Statement) * 100);
+
       trimProdStrings(tokens, it);
       prod->statementCount = 0;
+
       definitions[id - 1]->productions[ip] = prod;
       addStatements(definitions[id - 1]->productions[ip], tokens, it);
       definitions[id - 1]->productionCount++;
@@ -66,12 +70,20 @@ int main() {
 
   addTypeToStatements(definitions, defCount, defs);
 
-  printf("*** DEFINITIONS ***\n");
+  log_info("*** DEFINITIONS ***");
   printDefs(definitions, defCount);
 
-  FirstSet **firstSets = malloc(sizeof(FirstSet) * defCount);
+  FirstSet **firstSets = malloc(sizeof(FirstSet *) * defCount);
   FollowSet **followSets = malloc(sizeof(FollowSet *) * defCount);
   FollowSet *startSet = malloc(sizeof(FollowSet));
+
+  // ADDING $ SYMBOL TO START FOLLOW SET
+  startSet->itemCount = 1;
+  startSet->set = malloc(sizeof(char *));
+  startSet->set[0] = malloc(sizeof(char) * 2);
+  startSet->set[0] = "$";
+
+  followSets[0] = startSet;
 
   GeneratorState genState = {.defs = defs,
                              .definitions = definitions,
@@ -79,47 +91,107 @@ int main() {
                              .historyCounter = 0,
                              .firstSetCounter = 0,
                              .firstSets = firstSets,
-                             .followSetCounter = 0,
+                             .followSetCounter = 1,
                              .followSets = followSets};
 
-  startSet->itemCount = 1;
-  startSet->set = malloc(sizeof(char *));
-  startSet->set[0] = definitions[getDefinitionIndex(&genState, "start")]
-                         ->productions[0]
-                         ->statements[0]
-                         ->content;
-  startSet->set[1] = "$";
+  char **terminals = malloc(sizeof(char *) * 150);
+  char **nonterminals = malloc(sizeof(char *) * 150);
+  int terminalCount = getTerminals(terminals, &genState);
+  int nonterminalCount = getNonTerminals(nonterminals, &genState);
 
-  followSets[0] = startSet;
+  genState.terminals = terminals;
+  genState.terminalCount = terminalCount;
+  genState.nonterminals = nonterminals;
+  genState.nonterminalCount = nonterminalCount;
 
-  for (int defIndex = 0; defIndex < defCount; defIndex++) {
-    History *history[defCount * 2];
-    genState.history = history;
-    printf("(%d) %s:", defIndex, definitions[defIndex]->name);
+  FirstSetHistory *first_set_history = malloc(sizeof(FirstSetHistory));
+  first_set_history->arr_sets = malloc(sizeof(char **) * defCount);
+  first_set_history->arr_visited_count = malloc(sizeof(int *) * defCount);
 
-    FirstSet *res = getFirstSet(defIndex, &genState);
-    for (int i = 0; i < res->itemCount; i++)
-      printf(" %s", res->set[i]);
-    printf("\n");
+  for (int i = 0; i < defCount; i++) {
+    first_set_history->arr_visited_count[i] = malloc(sizeof(int));
+    *first_set_history->arr_visited_count[i] = 0;
   }
 
-  printf("(%d) %s:", 0, "start");
-  for (int i = 0; i < followSets[0]->itemCount; i++)
-    printf(" %s", followSets[0]->set[i]);
-  printf("\n");
+  genState.first_set_history = first_set_history;
+
+  FollowSetHistory *follow_set_history = malloc(sizeof(FollowSetHistory));
+  follow_set_history->arr_sets = malloc(sizeof(char **) * defCount);
+  follow_set_history->arr_visited_count = malloc(sizeof(int *) * defCount);
+
+  for (int i = 0; i < defCount; i++) {
+    follow_set_history->arr_visited_count[i] = malloc(sizeof(int));
+    *follow_set_history->arr_visited_count[i] = 0;
+  }
+
+  genState.follow_set_history = follow_set_history;
+
+  follow_set_history->arr_sets[0] = startSet;
+
+  for (int defIndex = 0; defIndex < defCount; defIndex++) {
+    FirstSet *res = getFirstSet(defIndex, &genState);
+  }
 
   // SKIPPING START FOLLOW SET
   for (int defIndex = 1; defIndex < defCount; defIndex++) {
-    History *history[defCount * 2];
-    genState.history = history;
-    genState.historyCounter = 0;
-    printf("(%d) %s:", defIndex, definitions[defIndex]->name);
-
     FollowSet *res = getFollowSet(defIndex, &genState);
-    for (int i = 0; i < res->itemCount; i++)
-      printf(" %s", res->set[i]);
-    printf("\n");
   }
+
+  // PRINT OR SAVE
+  {
+    char *outputbuffer = malloc(sizeof(char) * 100000);
+    char *p = outputbuffer;
+
+    for (int i = 0; i < genState.firstSetCounter; i++) {
+      if (genState.firstSets[i] != NULL) {
+        sprintf(outputbuffer, "%sFirstSet(%d) \'%s\': %s\n", outputbuffer, i,
+                definitions[i]->name,
+                get_first_set_string(genState.firstSets[i]));
+        log_trace("FirstSet(%d) \'%s\': %s", i, definitions[i]->name,
+                  get_first_set_string(genState.firstSets[i]));
+        log_trace("FirstSet(%d) count: %d", i,
+                  genState.firstSets[i]->itemCount);
+      } else
+        log_trace("FirstSet(%d) \'%s\': NULL", i, definitions[i]->name);
+    }
+
+    FILE *fptr;
+
+    fptr = fopen("firstset.txt", "w");
+
+    fprintf(fptr, "%s", outputbuffer);
+
+    fclose(fptr);
+    free(outputbuffer);
+  }
+  {
+    char *outputbuffer = malloc(sizeof(char) * 100000);
+    char *p = outputbuffer;
+
+    for (int i = 0; i < genState.followSetCounter; i++) {
+      if (genState.followSets[i] != NULL) {
+        sprintf(outputbuffer, "%sFollowSet(%d) \'%s\': %s\n", outputbuffer, i,
+                definitions[i]->name,
+                get_follow_set_string(genState.followSets[i]));
+        log_trace("FollowSet(%d) \'%s\': %s", i, definitions[i]->name,
+                  get_follow_set_string(genState.followSets[i]));
+        log_trace("FollowSet(%d) count: %d", i,
+                  genState.followSets[i]->itemCount);
+      } else
+        log_trace("FollowSet(%d) \'%s\': NULL", i, definitions[i]->name);
+    }
+
+    FILE *fptr;
+
+    fptr = fopen("followset.txt", "w");
+
+    fprintf(fptr, "%s", outputbuffer);
+
+    fclose(fptr);
+    free(outputbuffer);
+  }
+
+  // printDefSymbols(&genState);
 
   ParsingTable *table = createParsingTable(&genState);
 

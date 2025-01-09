@@ -1,20 +1,5 @@
 #include "firstset.h"
 
-int addFirstSet(char **sourceSet, char **destSet, int itemCount,
-                int destIndex) {
-  int counter = 0;
-  int itemsAdded = 0;
-  while (counter < itemCount) {
-    if (doesStringExistInArray(destSet, destIndex, sourceSet[counter]) ==
-        false) {
-      destSet[destIndex + counter] = sourceSet[counter];
-      itemsAdded++;
-    }
-    counter++;
-  };
-  return itemsAdded;
-}
-
 /*
   First set algorythm for definition:
     - if definition's first statement of a production is a terminal,
@@ -25,32 +10,38 @@ int addFirstSet(char **sourceSet, char **destSet, int itemCount,
     - if right hand side production is Def -> A1 A2 A3 B where A1 to A3
       have epsilon in first set than add first set of B to set.
  */
-FirstSet *getFirstSet(int defIndex, GeneratorState *genState) {
-  int setCounter = 0;
-  char **set = malloc(sizeof(char *) * 1000);
-  Definition *definition = genState->definitions[defIndex];
+int previous_index = 0;
+
+FirstSet *getFirstSet(int defIndex, GeneratorState *state) {
+  log_debug("FirstSet(%d): Previous index: %d", defIndex, previous_index);
+  previous_index = defIndex;
+  FirstSetHistory *first_set_history = state->first_set_history;
+
+  if (*first_set_history->arr_visited_count[defIndex] > 100) {
+    log_error("Infinite Loop Error: FirstSet creation detected left "
+              "recurrsion, in \'%s\'");
+    exit(EXIT_FAILURE);
+  }
+  first_set_history->arr_visited_count[defIndex]++;
 
   // HANDLE REPEATING OPERATIONS
-  if (isItemInHistory(genState, definition->name) &&
-      isItemInHistoryWithFirstSetCreated(genState, definition->name)) {
-    int foundDefIndex = getDefinitionIndex(genState, definition->name);
-    assert(foundDefIndex > -1);
-    // printf("error: index = -1 for string \"%s\"\n", definition->name);
-
-    FirstSet *result = genState->firstSets[foundDefIndex];
-    return result;
+  if (isItemInHistory(state, defIndex, FIRSTSET)) {
+    return first_set_history->arr_sets[defIndex];
   }
 
+  char **set = malloc(sizeof(char *) * 200);
+  FirstSet *savedSet = malloc(sizeof(FirstSet));
+  savedSet->itemCount = 0;
+  savedSet->set = set;
+  Definition *definition = state->definitions[defIndex];
+
   // ADD CURRENT DEFINITION TO HISTORY
-  History *item = malloc(sizeof(History));
-  item->item = definition->name;
-  item->isFirstSetCreated = false;
-  genState->history[genState->historyCounter++] = item;
+  first_set_history->arr_sets[defIndex] = savedSet;
 
   // CHECK IF ANY PRODUCTION CONTAINS EPSILON
   if (doAllProductionsContainEpsilon(definition)) {
-    if (doesStringExistInArray(set, setCounter, "epsilon") == false) {
-      set[setCounter++] = "epsilon";
+    if (doesStringExistInArray(set, savedSet->itemCount, "epsilon") == false) {
+      addSingleItemToSet("epsilon", savedSet);
     }
   }
 
@@ -59,8 +50,9 @@ FirstSet *getFirstSet(int defIndex, GeneratorState *genState) {
 
     // ADD EPSILON IF ANY PRODUCTION CONTAINS EPSILON
     if (doesProductionContainEpsilon(production)) {
-      if (doesStringExistInArray(set, setCounter, "epsilon") == false) {
-        set[setCounter++] = "epsilon";
+      if (doesStringExistInArray(set, savedSet->itemCount, "epsilon") ==
+          false) {
+        addSingleItemToSet("epsilon", savedSet);
       }
     }
 
@@ -69,22 +61,30 @@ FirstSet *getFirstSet(int defIndex, GeneratorState *genState) {
 
       // IF TERMINAL, ADD TO SET
       if (statement->type == TERMINAL) {
-        if (doesStringExistInArray(set, setCounter, statement->content) ==
-            false) {
-          set[setCounter++] = statement->content;
+        if (doesStringExistInArray(set, savedSet->itemCount,
+                                   statement->content) == false) {
+          addSingleItemToSet(statement->content, savedSet);
         }
         break;
       }
 
       // IF NONTERMINAL
       if (statement->type == NONTERMINAL) {
-        int newDefinitionIndex =
-            getDefinitionIndex(genState, statement->content);
-        assert(newDefinitionIndex > -1);
-        // printf("error: index = -1 for string \"%s\"\n", statement->content);
+        int newDefinitionIndex = getDefinitionIndex(state, statement->content);
 
-        FirstSet *newDefinitionFirstSet =
-            getFirstSet(newDefinitionIndex, genState);
+        if (newDefinitionIndex < 0) {
+          log_error("FirstSet(%d): Could not find non-terminal \'%s\'.",
+                    defIndex, statement->content);
+        }
+        assert(newDefinitionIndex > -1);
+
+        FirstSet *newDefinitionFirstSet;
+        if (isItemInHistory(state, newDefinitionIndex, FIRSTSET)) {
+          newDefinitionFirstSet =
+              first_set_history->arr_sets[newDefinitionIndex];
+        } else {
+          newDefinitionFirstSet = getFirstSet(newDefinitionIndex, state);
+        }
 
         // IF NONTERMINAL HAS EPSILON IN FIRST SET, GO TO NEXT STATEMENT
         if (doesSetContainEpsilon(newDefinitionFirstSet)) {
@@ -92,12 +92,7 @@ FirstSet *getFirstSet(int defIndex, GeneratorState *genState) {
         }
         // ELSE ADD STATEMENT'S FIRST SET TO SET AND STOP CHECKING
         else {
-          for (int j = 0; j < newDefinitionFirstSet->itemCount; j++) {
-            if (doesStringExistInArray(
-                    set, setCounter, newDefinitionFirstSet->set[j]) == false) {
-              set[setCounter++] = newDefinitionFirstSet->set[j];
-            }
-          }
+          addFirstSetToFirstSet(newDefinitionFirstSet, savedSet);
           break;
         }
       }
@@ -105,18 +100,16 @@ FirstSet *getFirstSet(int defIndex, GeneratorState *genState) {
   }
 
   // RETURN SET
-  FirstSet *savedSet = malloc(sizeof(FirstSet));
-  savedSet->itemCount = setCounter;
-  savedSet->set = set;
-  int newDefIndex = getDefinitionIndex(genState, definition->name);
-  // printf("defIndex: %d, defName: %s\n", newDefIndex, definition->name);
-  genState->firstSets[newDefIndex] = savedSet;
-  genState->firstSetCounter++;
-  for (int i = 0; i < genState->historyCounter; i++) {
-    if (strcmp(definition->name, genState->history[i]->item) == 0) {
-      genState->history[i]->isFirstSetCreated = true;
-    }
+  int newDefIndex = getDefinitionIndex(state, definition->name);
+  if (newDefIndex < 0) {
+    log_error("FirstSet(%d): Could not find non-terminal \'%s\'.", defIndex,
+              definition->name);
   }
+  assert(newDefIndex > -1);
+  log_trace("FirstSet(%d): added first set for \'%s\'.", newDefIndex,
+            definition->name);
+  state->firstSets[newDefIndex] = savedSet;
+  state->firstSetCounter++;
   return savedSet;
 }
 
@@ -163,4 +156,17 @@ int returnIndexForFirstNonEpsilonProduction(Definition *definition) {
   return result;
 }
 
-int func(int (*funcPtr)(int, int)) { return funcPtr(1, 2); }
+void addFirstSetToFirstSet(FirstSet *firstSet, FirstSet *result) {
+  for (int j = 0; j < firstSet->itemCount; j++) {
+    char *content = firstSet->set[j];
+    if (doesStringExistInArray(result->set, result->itemCount, content) ==
+        false) {
+      addSingleItemToSet(content, result);
+    }
+  }
+}
+
+void addSingleItemToSet(char *content, FirstSet *result) {
+  result->set[result->itemCount] = malloc(sizeof(char) * strlen(content) + 1);
+  result->set[result->itemCount++] = content;
+}

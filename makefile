@@ -16,11 +16,17 @@ parserGenerator: remove_parser_generator
 	${SRC_DIR}firstset.c \
 	${SRC_DIR}followset.c \
 	${SRC_DIR}parsingTable.c \
+	${SRC_DIR}logger.c \
 	${SRC_DIR}parserGenerator.c \
 	-o parserGenerator
 	
 parser:
-	${CC} ${CFLAGS} ${SRC_DIR}parser.c ${SRC_DIR}lexer.c ${SRC_DIR}parserGeneratorUtils.c -o parser
+	${CC} ${CFLAGS} \
+	${SRC_DIR}parser.c \
+	${SRC_DIR}lexer.c \
+	${SRC_DIR}logger.c \
+	${SRC_DIR}parserGeneratorUtils.c \
+	-o parser
 
 remove_parser:
 	rm -f parser

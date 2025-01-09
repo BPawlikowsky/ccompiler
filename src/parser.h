@@ -1,13 +1,9 @@
 #pragma once
 
 #include "types.h"
+#include "logger.h"
 #include "lexer.h"
 #include "parserGeneratorUtils.h"
-
-TokenType tokenTypes[] = {
-    SINGLELINE_COMMENT, MULTILINE_COMMENT, PREPROCESSOR, KEYWORD,
-    FLOAT_CONST,        INTEGER_CONST,     STRING,       CHAR,
-    IDENTIFIER,         NEWLINE,           OPERATOR,     WHITESPACE};
 
 Regex preprocRegex = {0, .expression = "#[[:print:]]+"};
 Regex identifierRegex = {0, .expression = "[_]?[[:alpha:]][[:alnum:]_]*"};
@@ -26,46 +22,59 @@ Regex newlineRegex = {0, .expression = "\n"};
 Regex operatorRegex = {0, .expression =
                               "\\+\\+|--|\\+=|-=|<=|>=|\\!=|==|<<|>>|&&|"
                               "\\|\\||\\*|&|\\+|-|~|\\!|\%|\\^|\\||\\(|\\)|\\{|"
-                              "\\}|;|\\[|\\]|=|,|<|>"};
+                              "\\}|;|:|\\[|\\]|=|,|<|>|\\?|\\/"};
 Regex stringRegex = {0, .expression = "\"[[:print:]]*\""};
 Regex singleLineCommentRegex = {0, .expression = "\\/\\/[[:print:]]+"};
 Regex multiLineCommentRegex = {
     0, .expression = "\\/\\*[[:space:]]*[[:print:]]*[[:space:]]*\\*\\/"};
 Regex charRegex = {0, .expression = "\'[[:print:]].*\'"};
 
-Regex *lexicon[] = {&singleLineCommentRegex,
-                    &multiLineCommentRegex,
-                    &preprocRegex,
-                    &keywordRegex,
-                    &floatRegex,
-                    &integerRegex,
-                    &stringRegex,
-                    &charRegex,
-                    &identifierRegex,
-                    &newlineRegex,
-                    &operatorRegex,
-                    &whitepsaceRegex};
-char *tokenTypeStrings[12] = {
+// TokenTypes and lexicon need to have enums and Regex
+// in the same places to properly identify tokens
+
+#define C_TOKEN_TYPES_COUNT 12
+
+TokenType arr_c_token_types[] = {
+    SINGLELINE_COMMENT, MULTILINE_COMMENT, PREPROCESSOR, KEYWORD,
+    INTEGER_CONST,FLOAT_CONST,             STRING,       CHAR,
+    IDENTIFIER,         NEWLINE,           OPERATOR,     WHITESPACE};
+
+Regex *arr_c_lexicon[] = {&singleLineCommentRegex,
+                          &multiLineCommentRegex,
+                          &preprocRegex,
+                          &keywordRegex,
+                          &integerRegex,
+                          &floatRegex,
+                          &stringRegex,
+                          &charRegex,
+                          &identifierRegex,
+                          &newlineRegex,
+                          &operatorRegex,
+                          &whitepsaceRegex};
+
+// helper array to print token types
+char *arr_c_token_type_strings[12] = {
     "SINGLELINE_COMMENT", "MULTILINE_COMMENT", "PREPROCESSOR", "KEYWORD",
-    "FLOAT_CONST",        "INTEGER_CONST",     "STRING",       "CHAR",
+    "INTEGER_CONST","FLOAT_CONST",             "STRING",       "CHAR",
     "IDENTIFIER",         "NEWLINE",           "OPERATOR",     "WHITESPACE"};
 
 // SIMPLE GRAMMER STUFF
 
-// TokenType tokenTypes[] = {
-// SINGLELINE_COMMENT, MULTILINE_COMMENT, PREPROCESSOR, KEYWORD,
-// INT, TIMES, PLUS, OPENPAR, CLOSEPAR, WHITESPACE};
+Regex intReg = {0, .expression = "int"};
+Regex timesReg = {0, .expression = "\\*"};
+Regex plusReg = {0, .expression = "\\+"};
+Regex openReg = {0, .expression = "\\("};
+Regex closeReg = {0, .expression = "\\)"};
 
-// Regex intReg = {0, .expression = "int"};
-// Regex timesReg = {0, .expression = "\\*"};
-// Regex plusReg = {0, .expression = "\\+"};
-// Regex openReg = {0, .expression = "\\("};
-// Regex closeReg = {0, .expression = "\\)"};
+#define SG_TOKEN_TYPES_COUNT 6
 
-// Regex *lexicon[] = {
-//     &openReg, &closeReg, &plusReg, &timesReg, &intReg, &whitepsaceRegex};
+TokenType arr_sg_token_types[] = {INT,     TIMES,    PLUS,
+                                  OPENPAR, CLOSEPAR, WHITESPACE};
 
-// char *tokenTypeStrings[12] = {
-//     "INT", "TIMES", "PLUS", "OPEN", "CLOSE", "WHITE"};
+Regex *arr_sg_lexicon[] = {&openReg,  &closeReg, &plusReg,
+                           &timesReg, &intReg,   &whitepsaceRegex};
+
+char *arr_sg_token_type_strings[6] = {"INT",  "TIMES", "PLUS",
+                                      "OPEN", "CLOSE", "WHITE"};
 
 int getItemTokenType(char *item, ParsingTable *table);

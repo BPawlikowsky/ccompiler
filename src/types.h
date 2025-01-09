@@ -1,33 +1,31 @@
 #pragma once
 #include "external.h"
 
-// typedef enum TokenType {
-//   SINGLELINE_COMMENT = 0,
-//   MULTILINE_COMMENT,
-//   PREPROCESSOR,
-//   KEYWORD,
-//   FLOAT_CONST,
-//   INTEGER_CONST,
-//   STRING,
-//   CHAR,
-//   IDENTIFIER,
-//   NEWLINE,
-//   OPERATOR,
-//   WHITESPACE,
-//   COUNT
-// } TokenType;
-
-typedef enum TokenType { DEF = 0, PROD, WHITESPACE, NEWLINE, COUNT } TokenType;
-
-// typedef enum TokenType {
-//   INT,
-//   TIMES,
-//   PLUS,
-//   OPENPAR,
-//   CLOSEPAR,
-//   WHITESPACE,
-//   COUNT
-// } TokenType;
+// Here you add token type enums for all elements of the compiler
+// and than put them in arrays to pass to the lexer
+typedef enum TokenType {
+  SINGLELINE_COMMENT = 0,
+  MULTILINE_COMMENT,
+  PREPROCESSOR,
+  KEYWORD,
+  FLOAT_CONST,
+  INTEGER_CONST,
+  STRING,
+  CHAR,
+  IDENTIFIER,
+  NEWLINE,
+  OPERATOR,
+  WHITESPACE,
+  COUNT,
+  DEF,
+  PROD,
+  COMMENT,
+  INT,
+  TIMES,
+  PLUS,
+  OPENPAR,
+  CLOSEPAR,
+} TokenType;
 
 typedef struct Token {
   TokenType type;
@@ -82,22 +80,31 @@ typedef struct FollowSet {
   int itemCount;
 } FollowSet;
 
-typedef struct History {
-  char *item;
-  bool isFirstSetCreated;
-  bool isFollowSetCreated;
-} History;
+typedef struct FirstSetHistory {
+  FirstSet **arr_sets;
+  int **arr_visited_count;
+} FirstSetHistory;
+
+typedef struct FollowSetHistory {
+  FollowSet **arr_sets;
+  int **arr_visited_count;
+} FollowSetHistory;
 
 typedef struct GeneratorState {
   char **defs;
   Definition **definitions;
   int defCount;
-  History **history;
+  FirstSetHistory *first_set_history;
+  FollowSetHistory *follow_set_history;
   int historyCounter;
   FirstSet **firstSets;
   int firstSetCounter;
   FollowSet **followSets;
   int followSetCounter;
+  int terminalCount;
+  char **terminals;
+  int nonterminalCount;
+  char **nonterminals;
 } GeneratorState;
 
 typedef struct TableEntry {
@@ -115,3 +122,5 @@ typedef struct ParsingTable {
   char **nonterminals;
   TableEntry **table;
 } ParsingTable;
+
+typedef enum SetType { FIRSTSET, FOLLOWSET } SetType; //

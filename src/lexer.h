@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include "logger.h"
 
 int lexer(char *buffer, Token *tokens, Regex **lexicon, TokenType *tokenTypes,
           int tokenTypeCount);
