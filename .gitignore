@@ -4,8 +4,8 @@
 parserGenerator
 .clang-format
 .output
-parserGenerator
-parser
+LL1Generator
+LL1parser
 parsing-table-csv
 ptable.dat
 terminals.txt
