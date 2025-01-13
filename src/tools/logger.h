@@ -1,4 +1,7 @@
-#include "external.h"
+#include "../external.h"
+#define LOG_DEBUG
+#define LOG_TRACE
+#define LOG_ERROR
 
 void log_trace(const char *msg, ...);
 void log_error(const char *msg, ...);

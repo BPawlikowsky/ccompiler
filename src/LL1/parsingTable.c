@@ -13,8 +13,8 @@ ParsingTable *createParsingTable(GeneratorState *state) {
 
   table->tableSize = table->nonterminalCount * table->terminalCount;
 
-  printf("terminals: %d, nonterminals: %d\n", table->terminalCount,
-         table->nonterminalCount);
+  log_trace("terminals: %d, nonterminals: %d\n", table->terminalCount,
+            table->nonterminalCount);
 
   TableEntry **tab = malloc(sizeof(TableEntry) * table->tableSize);
 
@@ -32,15 +32,15 @@ ParsingTable *createParsingTable(GeneratorState *state) {
     FirstSet *definition_first_set = state->firstSets[d];
     FollowSet *definition_follow_set = state->followSets[d];
 
-    printf("(%d)definition: %s\n", d, definition->name);
+    log_trace("(%d)definition: %s\n", d, definition->name);
 
     for (int p = 0; p < definition->productionCount; p++) {
       Production *production = definition->productions[p];
       Statement *firstSymbol = production->statements[0];
 
       if (production->statementCount == 0) {
-        printf("Definition %s has an empty production no. %d\n",
-               definition->name, p);
+        log_trace("Definition %s has an empty production no. %d\n",
+                  definition->name, p);
       }
 
       // IF PRODUCTION IS EPSILON
@@ -98,7 +98,7 @@ ParsingTable *createParsingTable(GeneratorState *state) {
     }
   }
 
-  printf("Total overwrites: %d\n", totalOverwrites);
+  log_trace("Total overwrites: %d\n", totalOverwrites);
 
   return table;
 }
@@ -126,7 +126,7 @@ bool isStringInFirstSet(char *str, FirstSet *set) {
 bool addItemToTable(int row, int col, Production *production,
                     ParsingTable *table) {
   if (row < 0 || col < 0) {
-    printf("error in row or col, row=%d, col=%d\n", row, col);
+    log_error("error in row or col, row=%d, col=%d\n", row, col);
   }
   int index = (table->terminalCount * row) + col;
   if (table->table[index]->error == false) {

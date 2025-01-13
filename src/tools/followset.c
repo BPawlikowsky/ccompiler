@@ -91,11 +91,11 @@ FollowSet *getFollowSet(int defIndex, GeneratorState *state) {
         if (nextStatement->type == NONTERMINAL) {
           int newDefIndex = getDefinitionIndex(state, nextStatement->content);
 
-          assert(newDefIndex > -1);
           if (newDefIndex < 0) {
             log_error("FollowSet(%d): could not find non-terminal \'%s\'.",
                       defIndex, nextStatement->content);
           }
+          assert(newDefIndex > -1);
 
           FirstSet *firstSet = state->firstSets[newDefIndex];
 
@@ -181,7 +181,7 @@ void addFirstSetToSet(FirstSet *firstSet, FollowSet *result) {
 }
 
 void addSingleItemToFollowSet(char *content, FollowSet *result) {
-  result->set[result->itemCount] = malloc(sizeof(char) * strlen(content));
+  result->set[result->itemCount] = malloc(sizeof(char) * strlen(content) + 1);
   result->set[result->itemCount++] = content;
 }
 

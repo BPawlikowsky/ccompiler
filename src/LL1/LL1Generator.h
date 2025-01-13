@@ -1,11 +1,11 @@
 #pragma once
 
-#include "lexer.h"
-#include "firstset.h"
-#include "followset.h"
+#include "../tools/lexer.h"
+#include "../tools/firstset.h"
+#include "../tools/followset.h"
 #include "parsingTable.h"
 #include "parserGeneratorUtils.h"
-#include "logger.h"
+#include "../tools/logger.h"
 
 #define TOKEN_TYPES_COUNT 5
 

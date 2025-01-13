@@ -2,60 +2,43 @@ start:
 <p>translation_unit</p>
 
 primary_expression:
-<p>identifier</p>
-<p>constant</p>
-<p>string_literal</p>
+<p>IDENTIFIER</p>
+<p>CONSTANT</p>
+<p>STRING_LITERAL</p>
 <p>( expression )</p>
 
-// New rule for parenthesized expressions
-// paren_expression:
-// <p>( expression_or_cast )</p>
-// 
-// // New rule to disambiguate between expression and cast
-// expression_or_cast:
-// <p>type_name ) cast_expression</p>
-// <p>expression )</p>
-
 postfix_expression:
-<p>primary_expression postfix_ops postfix_expression_tail</p>
-
-postfix_ops:
-<p>[ expression ]</p>
-<p>( postfix_ops_func_suffix</p>
-<p>. identifier</p>
-<p>PTR_OP identifier</p>
-<p>INC_OP_POST</p>
-<p>DEC_OP_POST</p>
-
-postfix_ops_func_suffix:
-<p>)</p>
-<p>argument_expression_list )</p>
+<p>primary_expression primary_expression_ops postfix_expression_tail</p>
 
 postfix_expression_tail:
-<p>primary_expression postfix_ops postfix_expression_tail</p>
+<p>primary_expression primary_expression_ops postfix_expression_tail</p>
 <p>epsilon</p>
 
-argument_expression_list:
-<p>assignment_expression argument_expression_list_tail</p>
+primary_expression_ops:
+<p>[ expression ]</p>
+<p>( primary_expression_ops_args</p>
+<p>. IDENTIFIER</p>
+<p>PTR_OP IDENTIFIER</p>
+<p>unary_expression_prefix</p>
 
-argument_expression_list_tail:
-<p>, assignment_expression argument_expression_list_tail</p>
-<p>epsilon</p>
+primary_expression_ops_args:
+<p>)</p>
+<p>expression )</p>
 
 unary_expression:
 <p>postfix_expression</p>
 <p>unary_expression_prefix unary_expression</p>
 <p>unary_operator cast_expression</p>
-<p>SIZEOF sizeof_suffix</p>
+<p>SIZEOF unary_expression_sizeof</p>
 
 unary_expression_prefix:
 <p>INC_OP</p>
 <p>DEC_OP</p>
 
-
-sizeof_suffix:
+unary_expression_sizeof:
 <p>unary_expression</p>
-<p>( type_name )</p>
+<p>type_name_paren</p>
+
 
 unary_operator:
 <p>&</p>
@@ -67,88 +50,73 @@ unary_operator:
 
 cast_expression:
 <p>unary_expression</p>
-<p>paren_cast</p>
+<p>type_name_paren cast_expression</p>
 
-paren_cast:
-<p>( type_name ) cast_expression</p>
+type_name_paren:
+<p>( type_name )</p>
 
 multiplicative_expression:
 <p>cast_expression multiplicative_expression_tail</p>
 
 multiplicative_expression_tail:
-<p>multiplicative_expression_ops cast_expression multiplicative_expression_tail</p>
+<p>* cast_expression multiplicative_expression_tail</p>
+<p>/ cast_expression multiplicative_expression_tail</p>
+<p>% cast_expression multiplicative_expression_tail</p>
 <p>epsilon</p>
-
-multiplicative_expression_ops:
-<p>MUL</p>
-<p>DIV</p>
-<p>MOD</p>
 
 additive_expression:
 <p>multiplicative_expression additive_expression_tail</p>
 
 additive_expression_tail:
-<p>additive_expression_ops multiplicative_expression additive_expression_tail</p>
+<p>+ multiplicative_expression additive_expression_tail</p>
+<p>- multiplicative_expression additive_expression_tail</p>
 <p>epsilon</p>
-
-additive_expression_ops:
-<p>PLUS</p>
-<p>MINUS</p>
 
 shift_expression:
 <p>additive_expression shift_expression_tail</p>
 
 shift_expression_tail:
-<p>shift_expression_ops additive_expression shift_expression_tail</p>
+<p>LEFT_OP additive_expression shift_expression_tail</p>
+<p>RIGHT_OP additive_expression shift_expression_tail</p>
 <p>epsilon</p>
-
-shift_expression_ops:
-<p>LEFT_OP</p>
-<p>RIGHT_OP</p>
 
 relational_expression:
 <p>shift_expression relational_expression_tail</p>
 
 relational_expression_tail:
-<p>relational_expression_ops shift_expression relational_expression_tail</p>
+<p>< shift_expression relational_expression_tail</p>
+<p>> shift_expression relational_expression_tail</p>
+<p>LE_OP shift_expression relational_expression_tail</p>
+<p>GE_OP shift_expression relational_expression_tail</p>
 <p>epsilon</p>
-
-relational_expression_ops:
-<p><</p>
-<p>></p>
-<p>LE_OP</p>
-<p>GE_OP</p>
 
 equality_expression:
 <p>relational_expression equality_expression_tail</p>
 
 equality_expression_tail:
-<p>equality_expression_ops relational_expression equality_expression_tail</p>
+<p>EQ_OP relational_expression equality_expression_tail</p>
+<p>NE_OP relational_expression equality_expression_tail</p>
 <p>epsilon</p>
-
-equality_expression_ops:
-<p>EQ_OP</p>
-<p>NE_OP</p>
 
 and_expression:
 <p>equality_expression and_expression_tail</p>
 
 and_expression_tail:
-<p>LOG_AND equality_expression and_expression_tail</p>
+<p>& equality_expression and_expression_tail</p>
 <p>epsilon</p>
 
 exclusive_or_expression:
 <p>and_expression exclusive_or_expression_tail</p>
 
 exclusive_or_expression_tail:
-<p>LOG_EX_OR and_expression exclusive_or_expression_tail</p>
+<p>^ and_expression exclusive_or_expression_tail</p>
 <p>epsilon</p>
 
 inclusive_or_expression:
 <p>exclusive_or_expression inclusive_or_expression_tail</p>
 
 inclusive_or_expression_tail:
-<p>LOG_OR exclusive_or_expression inclusive_or_expression_tail</p>
+<p>| exclusive_or_expression inclusive_or_expression_tail</p>
 <p>epsilon</p>
 
 logical_and_expression:
@@ -169,18 +137,15 @@ conditional_expression:
 <p>logical_or_expression conditional_expression_tail</p>
 
 conditional_expression_tail:
-<p>? expression : logical_or_expression conditional_expression_tail</p>
+<p>? expression : conditional_expression conditional_expression_tail</p>
 <p>epsilon</p>
 
 assignment_expression:
-<p>conditional_expression</p>
-<p>unary_expression assignment_expression_suffix</p>
-
-assignment_expression_suffix:
-<p>assignment_operator assignment_expression</p>
+<p>logical_or_expression conditional_expression_tail</p>
+<p>unary_expression assignment_operator assignment_expression</p>
 
 assignment_operator:
-<p>ASSIGN</p>
+<p>=</p>
 <p>MUL_ASSIGN</p>
 <p>DIV_ASSIGN</p>
 <p>MOD_ASSIGN</p>
@@ -203,23 +168,23 @@ constant_expression:
 <p>conditional_expression</p>
 
 declaration:
-<p>declaration_specifiers declaration_tail</p>
+<p>declaration_specifiers init_declarator_list_opt ;</p>
 
-declaration_tail:
-<p>;</p>
-<p>init_declarator_list ;</p>
+init_declarator_list_opt:
+<p>init_declarator_list</p>
+<p>epsilon</p>
 
 declaration_specifiers:
-<p>declaration_specifier declaration_specifiers_tail</p>
+<p>declaration_specifiers_prefix declaration_specifiers_tail</p>
 
-declaration_specifier:
+declaration_specifiers_prefix:
 <p>storage_class_specifier</p>
-<p>type_specifier</p>
-<p>type_qualifier</p>
+<p>specifier_qualifier_list_prefix</p>
 
 declaration_specifiers_tail:
-<p>declaration_specifier declaration_specifiers_tail</p>
+<p>declaration_specifiers_prefix declaration_specifiers_tail</p>
 <p>epsilon</p>
+
 
 init_declarator_list:
 <p>init_declarator init_declarator_list_tail</p>
@@ -243,12 +208,6 @@ storage_class_specifier:
 <p>register</p>
 
 type_specifier:
-<p>primitive_type</p>
-<p>struct_or_union_specifier</p>
-<p>enum_specifier</p>
-<p>TYPE_NAME</p>
-
-primitive_type:
 <p>void</p>
 <p>char</p>
 <p>short</p>
@@ -258,16 +217,18 @@ primitive_type:
 <p>double</p>
 <p>signed</p>
 <p>unsigned</p>
-
+<p>struct_or_union_specifier</p>
+<p>enum_specifier</p>
+<p>TYPE_NAME</p>
 
 struct_or_union_specifier:
-<p>struct_or_union struct_or_union_specifier_tail</p>
-
-struct_or_union_specifier_tail:
-<p>identifier struct_or_union_specifier_suffix</p>
-<p>{ struct_declaration_list }</p>
+<p>struct_or_union struct_or_union_specifier_suffix</p>
 
 struct_or_union_specifier_suffix:
+<p>IDENTIFIER struct_or_union_specifier_suffix_list_opt</p>
+<p>{ struct_declaration_list }</p>
+
+struct_or_union_specifier_suffix_list_opt:
 <p>{ struct_declaration_list }</p>
 <p>epsilon</p>
 
@@ -286,15 +247,15 @@ struct_declaration:
 <p>specifier_qualifier_list struct_declarator_list ;</p>
 
 specifier_qualifier_list:
-<p>specifier_qualifier specifier_qualifier_list_tail</p>
+<p>specifier_qualifier_list_prefix specifier_qualifier_list_opt</p>
 
-specifier_qualifier:
+specifier_qualifier_list_opt:
+<p>specifier_qualifier_list</p>
+<p>epsilon</p>
+
+specifier_qualifier_list_prefix:
 <p>type_specifier</p>
 <p>type_qualifier</p>
-
-specifier_qualifier_list_tail:
-<p>specifier_qualifier specifier_qualifier_list_tail</p>
-<p>epsilon</p>
 
 struct_declarator_list:
 <p>struct_declarator struct_declarator_list_tail</p>
@@ -304,8 +265,8 @@ struct_declarator_list_tail:
 <p>epsilon</p>
 
 struct_declarator:
-<p>declarator struct_declarator_suffix</p>
 <p>: constant_expression</p>
+<p>declarator struct_declarator_suffix</p>
 
 struct_declarator_suffix:
 <p>: constant_expression</p>
@@ -316,9 +277,9 @@ enum_specifier:
 
 enum_specifier_suffix:
 <p>{ enumerator_list }</p>
-<p>identifier enum_specifier_suffix_suffix</p>
+<p>IDENTIFIER enum_specifier_suffix_opt</p>
 
-enum_specifier_suffix_suffix:
+enum_specifier_suffix_opt:
 <p>{ enumerator_list }</p>
 <p>epsilon</p>
 
@@ -330,7 +291,7 @@ enumerator_list_tail:
 <p>epsilon</p>
 
 enumerator:
-<p>identifier enumerator_suffix</p>
+<p>IDENTIFIER enumerator_suffix</p>
 
 enumerator_suffix:
 <p>ENUM_EQ constant_expression</p>
@@ -345,30 +306,35 @@ declarator:
 <p>direct_declarator</p>
 
 direct_declarator:
-<p>identifier direct_declarator_suffix</p>
-<p>( declarator ) direct_declarator_suffix</p>
+<p>direct_declarator_prefix direct_declarator_ops direct_declarator_tail</p>
 
-direct_declarator_suffix:
-<p>[ array_size ] direct_declarator_suffix</p>
-<p>( parameter_suffix ) direct_declarator_suffix</p>
+direct_declarator_prefix:
+<p>IDENTIFIER</p>
+<p>( declarator )</p>
+
+direct_declarator_tail:
+<p>direct_declarator_prefix direct_declarator_ops direct_declarator_tail</p>
 <p>epsilon</p>
 
-array_size:
-<p>constant_expression</p>
-<p>epsilon</p>
+direct_declarator_ops:
+<p>[ direct_declarator_ops_array</p>
+<p>( direct_declarator_ops_func</p>
 
-parameter_suffix:
-<p>parameter_list</p>
-<p>epsilon</p>
+direct_declarator_ops_array:
+<p>constant_expression ]</p>
+<p>]</p>
+
+direct_declarator_ops_func:
+<p>parameter_type_list )</p>
+<p>identifier_list )</p>
+<p>)</p>
 
 pointer:
-<p>* type_qualifier_list_opt pointer_opt</p>
+<p>* pointer_suffix</p>
 
-type_qualifier_list_opt:
+pointer_suffix:
 <p>type_qualifier_list</p>
-<p>epsilon</p>
-
-pointer_opt:
+<p>type_qualifier_list pointer</p>
 <p>pointer</p>
 <p>epsilon</p>
 
@@ -384,7 +350,8 @@ parameter_type_list:
 <p>parameter_list parameter_type_list_tail</p>
 
 parameter_type_list_tail:
-<p>, ELLIPSIS</p>
+<p>parameter_list parameter_type_list_tail</p>
+<p>, parameter_type_list_tail ELLIPSIS</p>
 <p>epsilon</p>
 
 parameter_list:
@@ -402,6 +369,13 @@ parameter_declaration_suffix:
 <p>abstract_declarator</p>
 <p>epsilon</p>
 
+identifier_list:
+<p>IDENTIFIER identifier_list_tail</p>
+
+identifier_list_tail:
+<p>, IDENTIFIER identifier_list_tail</p>
+<p>epsilon</p>
+
 type_name:
 <p>specifier_qualifier_list type_name_suffix</p>
 
@@ -410,46 +384,41 @@ type_name_suffix:
 <p>epsilon</p>
 
 abstract_declarator:
-<p>pointer_part direct_abstract_part</p>
+<p>pointer abstract_declarator_suffix</p>
+<p>direct_abstract_declarator</p>
 
-pointer_part:
-<p>pointer</p>
-<p>epsilon</p>
-
-direct_abstract_part:
+abstract_declarator_suffix:
 <p>direct_abstract_declarator</p>
 <p>epsilon</p>
 
 direct_abstract_declarator:
-<p>direct_abstract_declarator_opt_part array_func_modifiers</p>
+<p>( direct_abstract_declarator_paren_suffix</p>
+<p>[ direct_abstract_declarator_array</p>
+<p>direct_abstract_declarator direct_abstract_declarator_suffix</p>
 
-direct_abstract_declarator_opt_part:
-<p>parenthesized_abstract</p>
-<p>epsilon</p>
+direct_abstract_declarator_suffix:
+<p>[ direct_abstract_declarator_array</p>
+<p>( direct_abstract_declarator_func</p>
 
-parenthesized_abstract:
-<p>( abstract_declarator )</p>
+direct_abstract_declarator_paren_suffix:
+<p>abstract_declarator )</p>
+<p>direct_abstract_declarator_func</p>
 
-array_func_modifiers:
-<p>array_modifier array_func_modifiers</p>
-<p>function_modifier array_func_modifiers</p>
-<p>epsilon</p>
+direct_abstract_declarator_array:
+<p>]</p>
+<p>constant_expression ]</p>
 
-array_modifier:
-<p>[ array_size ]</p>
-
-function_modifier:
-<p>( function_modifier_opt )</p>
-
-function_modifier_opt:
-<p>parameter_type_list</p>
+direct_abstract_declarator_func:
+<p>)</p>
+<p>parameter_type_list )</p>
 
 initializer:
-<p>assignment_expression</p>
+<p>unary_expression assignment_expression_tail</p>
 <p>{ initializer_list initializer_suffix</p>
 
 initializer_suffix:
 <p>}</p>
+<p>, }</p>
 
 initializer_list:
 <p>initializer initializer_list_tail</p>
@@ -466,23 +435,27 @@ statement:
 <p>iteration_statement</p>
 <p>jump_statement</p>
 
-
-
-
 labeled_statement:
 <p>labeled_statement_prefix : statement</p>
 
 labeled_statement_prefix:
 <p>LABEL_IDENTIFIER</p>
-<p>case constant_expression</p>
-<p>default</p>
+<p>CASE constant_expression</p>
+<p>DEFAULT</p>
 
 compound_statement:
-<p>{ compound_statement_body }</p>
+<p>{ compound_statement_suffix</p>
 
-compound_statement_body:
-<p>declaration_list statement_list</p>
+compound_statement_suffix:
+<p>compound_statement_suffix_decl</p>
+<p>declaration_list compound_statement_suffix_decl</p>
+
+compound_statement_suffix_decl:
+<p>statement_list_opt }</p>
+
+statement_list_opt:
 <p>statement_list</p>
+<p>epsilon</p>
 
 declaration_list:
 <p>declaration declaration_list_tail</p>
@@ -511,23 +484,24 @@ selection_statement_suffix:
 <p>epsilon</p>
 
 iteration_statement:
-<p>while ( expression ) statement</p>
-<p>do statement while ( expression ) ;</p>
-<p>for ( expression_statement expression_statement iteration_statement_for_suffix</p>
+<p>while ( expression ) while_suffix</p>
+<p>do statement while ( expression ) while_suffix</p>
+<p>for ( expression_statement expression_statement expression_opt ) statement</p>
 
-iteration_statement_for_suffix:
-<p>) statement</p>
-<p>expression ) statement</p>
+while_suffix:
+<p>;</p>
+<p>statement</p>
+
+expression_opt:
+<p>expression</p>
+<p>epsilon</p>
 
 jump_statement:
-<p>goto identifier ;</p>
-<p>continue ;</p>
-<p>break ;</p>
-<p>return jump_statement_return</p>
-
-jump_statement_return:
-<p>;</p>
-<p>expression ;</p>
+<p>GOTO IDENTIFIER ;</p>
+<p>CONTINUE ;</p>
+<p>BREAK ;</p>
+<p>return ;</p>
+<p>return expression ;</p>
 
 translation_unit:
 <p>external_declaration translation_unit_tail</p>
@@ -537,13 +511,13 @@ translation_unit_tail:
 <p>epsilon</p>
 
 external_declaration:
-<p>declaration_specifiers external_declaration_tail</p>
+<p>function_definition</p>
+<p>declaration</p>
 
-external_declaration_tail:
-<p>declarator external_declaration_tail_suffix</p>
-<p>;</p>  // For declarations like "int;"
+function_definition:
+<p>declaration_specifiers declarator function_definition_decl_specifiers ;</p>
+<p>declarator function_definition_decl_specifiers ;</p>
 
-external_declaration_tail_suffix:
-<p>compound_statement</p>                   // Function def
-<p>init_declarator_list_tail ;</p>         // Declaration with multiple declarators
-<p>;</p>                                   // Simple declaration
+function_definition_decl_specifiers:
+<p>declaration_list compound_statement</p>
+<p>compound_statement</p>

@@ -12,9 +12,29 @@
  */
 int previous_index = 0;
 
+typedef struct {
+  int *arr;
+  int counter;
+} FirstSetIndexes;
+
+void add_first_set_index(FirstSetIndexes *indexes, int index) {
+  for (int i = 0; i < indexes->counter; i++) {
+    if (indexes->arr[i] == index) {
+      log_debug("Duplicate of index %d", index);
+      return;
+    }
+  }
+
+  log_debug("Index %d added", index);
+  indexes->arr[indexes->counter++] = index;
+}
+
 FirstSet *getFirstSet(int defIndex, GeneratorState *state) {
   log_debug("FirstSet(%d): Previous index: %d", defIndex, previous_index);
   previous_index = defIndex;
+
+  int *arr = malloc(sizeof(int) * state->defCount);
+  FirstSetIndexes indexes = {.counter = 0, .arr = arr};
   FirstSetHistory *first_set_history = state->first_set_history;
 
   if (*first_set_history->arr_visited_count[defIndex] > 100) {
@@ -83,11 +103,14 @@ FirstSet *getFirstSet(int defIndex, GeneratorState *state) {
           newDefinitionFirstSet =
               first_set_history->arr_sets[newDefinitionIndex];
         } else {
-          newDefinitionFirstSet = getFirstSet(newDefinitionIndex, state);
+          add_first_set_index(&indexes, newDefinitionIndex);
+          // newDefinitionFirstSet = getFirstSet(newDefinitionIndex, state);
+          break;
         }
 
         // IF NONTERMINAL HAS EPSILON IN FIRST SET, GO TO NEXT STATEMENT
-        if (doesSetContainEpsilon(newDefinitionFirstSet)) {
+        if (newDefinitionFirstSet != NULL &&
+            doesSetContainEpsilon(newDefinitionFirstSet)) {
           continue;
         }
         // ELSE ADD STATEMENT'S FIRST SET TO SET AND STOP CHECKING
@@ -99,18 +122,31 @@ FirstSet *getFirstSet(int defIndex, GeneratorState *state) {
     }
   }
 
-  // RETURN SET
-  int newDefIndex = getDefinitionIndex(state, definition->name);
-  if (newDefIndex < 0) {
-    log_error("FirstSet(%d): Could not find non-terminal \'%s\'.", defIndex,
-              definition->name);
+  // ADD FISTSET TO SET
+  log_debug("First set indexes count: %d", indexes.counter);
+  for (int i = 0; i < indexes.counter; i++) {
+    saveFirstSet(state, defIndex, savedSet);
+    FirstSet *firstSetResult;
+    firstSetResult = getFirstSet(indexes.arr[i], state);
+
+    addFirstSetToFirstSet(firstSetResult, savedSet);
   }
-  assert(newDefIndex > -1);
-  log_trace("FirstSet(%d): added first set for \'%s\'.", newDefIndex,
+
+  // RETURN SET
+  if (savedSet->itemCount == 0) {
+    log_error("Error: Firstset empty for definition %s", definition->name);
+    exit(EXIT_FAILURE);
+  }
+  log_trace("FirstSet(%d): added first set for \'%s\'.", defIndex,
             definition->name);
-  state->firstSets[newDefIndex] = savedSet;
+  saveFirstSet(state, defIndex, savedSet);
   state->firstSetCounter++;
   return savedSet;
+}
+
+void saveFirstSet(GeneratorState *state, int newDefIndex, FirstSet *set) {
+  state->first_set_history->arr_sets[newDefIndex] = set;
+  state->firstSets[newDefIndex] = set;
 }
 
 bool doesRightHandSideContainTerminal(Definition *definition) {

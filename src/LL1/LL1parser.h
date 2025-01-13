@@ -1,8 +1,9 @@
 #pragma once
 
-#include "types.h"
-#include "logger.h"
-#include "lexer.h"
+#include "../types.h"
+#include "../tools/logger.h"
+#include "../tools/lexer.h"
+#include "../utils/utils.h"
 #include "parserGeneratorUtils.h"
 
 Regex preprocRegex = {0, .expression = "#[[:print:]]+"};
@@ -36,7 +37,7 @@ Regex charRegex = {0, .expression = "\'[[:print:]].*\'"};
 
 TokenType arr_c_token_types[] = {
     SINGLELINE_COMMENT, MULTILINE_COMMENT, PREPROCESSOR, KEYWORD,
-    INTEGER_CONST,FLOAT_CONST,             STRING,       CHAR,
+    INTEGER_CONST,      FLOAT_CONST,       STRING,       CHAR,
     IDENTIFIER,         NEWLINE,           OPERATOR,     WHITESPACE};
 
 Regex *arr_c_lexicon[] = {&singleLineCommentRegex,
@@ -55,7 +56,7 @@ Regex *arr_c_lexicon[] = {&singleLineCommentRegex,
 // helper array to print token types
 char *arr_c_token_type_strings[12] = {
     "SINGLELINE_COMMENT", "MULTILINE_COMMENT", "PREPROCESSOR", "KEYWORD",
-    "INTEGER_CONST","FLOAT_CONST",             "STRING",       "CHAR",
+    "INTEGER_CONST",      "FLOAT_CONST",       "STRING",       "CHAR",
     "IDENTIFIER",         "NEWLINE",           "OPERATOR",     "WHITESPACE"};
 
 // SIMPLE GRAMMER STUFF

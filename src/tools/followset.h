@@ -1,7 +1,8 @@
 #ifndef FOLLOWSETH
 #define FOLLOWSETH
 
-#include "parserGeneratorUtils.h"
+#include "../types.h"
+#include "settools.h"
 
 FollowSet *getFollowSet(int defIndex, GeneratorState *state);
 int getStatementIndexFromProduction(Definition *definition,

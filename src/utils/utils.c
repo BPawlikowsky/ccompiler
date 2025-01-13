@@ -1,45 +1,35 @@
-#include "parserGeneratorUtils.h"
+#include "utils.h"
 
-int getDefinitionIndex(GeneratorState *genState, char *statement) {
-  for (int i = 0; i < genState->defCount; i++) {
-    if (strcmp(genState->defs[i], statement) == 0)
-      return i;
+// GENERAL
+
+void loadFileToBuffer(char *path, char *bp) {
+  FILE *fp;
+  if ((fp = fopen(path, "r")) == NULL)
+    log_error("Could not open file\n");
+  else {
+    while ((*bp++ = fgetc(fp)) != EOF) {
+    }
+    *--bp = '\0';
   }
-  return -1;
+  fclose(fp);
 }
 
-int doesStringExistInArray(char *history[], int historyCount,
+int doesStringExistInArray(char *strings[], int stringsCount,
                            char *itemToCheck) {
-  for (int i = 0; i < historyCount; i++) {
-    if (strcmp(history[i], itemToCheck) == 0)
+  for (int i = 0; i < stringsCount; i++) {
+    if (strcmp(strings[i], itemToCheck) == 0)
       return true;
   }
   return false;
 }
 
-bool isItemInHistory(GeneratorState *state, int defIndex, SetType setType) {
-  if (setType == FIRSTSET) {
-    if (state->first_set_history->arr_sets[defIndex] != NULL) {
-      return true;
-    }
-  } else {
-    if (state->follow_set_history->arr_sets[defIndex] != NULL) {
-      return true;
-    }
+char *concatArrayOfStrings(char **strings, int stringCount, char *separator) {
+  char *result = malloc(sizeof(char) * 1000);
+  for (int i = 0; i < stringCount; i++) {
+    sprintf(result, "%s%s%s", result, separator, strings[i]);
   }
-  return false;
-}
 
-void printHistory(GeneratorState *state, SetType type) {
-  if (type == FIRSTSET) {
-    for (int i = 0; i < state->defCount; i++) {
-      log_trace("%d %s", i, state->first_set_history->arr_sets[i]);
-    }
-  } else {
-    for (int i = 0; i < state->defCount; i++) {
-      log_trace("%d %s", i, state->follow_set_history->arr_sets[i]);
-    }
-  }
+  return result;
 }
 
 char *getStringId(int def_index, bool upper_case) {
@@ -65,6 +55,37 @@ char *getStringId(int def_index, bool upper_case) {
 
   return s_result;
 }
+
+char *typeToString(int type) {
+  static char *result;
+  switch (type) {
+  case 0:
+    result = "PROD";
+    break;
+  case 1:
+    result = "DEF";
+    break;
+  default:
+    result = "";
+  }
+  return result;
+}
+
+// TOKENS
+
+void printToken(Token tokens[], int it) {
+  char *content = tokens[it].content;
+  int type = tokens[it].type;
+  log_debug("%d: %s %s\n", it, content, typeToString(type));
+}
+
+void trimProdStrings(Token tokens[], int it) {
+  tokens[it].content = tokens[it].content + 3;
+  char *fp = strstr(tokens[it].content, "</p>");
+  tokens[it].content[fp - tokens[it].content] = '\0';
+}
+
+// DEFINITIONS & STATEMENTS
 
 void printDefs(Definition *defs[], int defCount) {
   int i = 0;
@@ -99,6 +120,28 @@ void printDefs(Definition *defs[], int defCount) {
   }
 }
 
+int getDefinitionIndexFromDefs(Definition **defs, int count, char *name) {
+  for (int i = 0; i < count; i++) {
+    if (strcmp(defs[i]->name, name) == 0) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+char *concatStatements(Statement **statements, int statementCount,
+                       char *separator) {
+  char *result = malloc(sizeof(char) * 1000);
+  for (int i = 0; i < statementCount; i++) {
+    sprintf(result, "%s%s%s", result, separator, statements[i]->content);
+  }
+
+  return result;
+}
+
+// HELPER FUNCS
+
 int getTerminalIndex(char **terminals, int count, char *terminal) {
   for (int i = 0; i < count; i++) {
     if (strcmp(terminals[i], terminal) == 0) {
@@ -109,13 +152,13 @@ int getTerminalIndex(char **terminals, int count, char *terminal) {
   return -1;
 }
 
-int getDefinitionIndexFromDefs(Definition **defs, int count, char *name) {
-  for (int i = 0; i < count; i++) {
-    if (strcmp(defs[i]->name, name) == 0) {
-      return i;
-    }
-  }
+// GENERATOR STATE
 
+int getDefinitionIndex(GeneratorState *genState, char *statement) {
+  for (int i = 0; i < genState->defCount; i++) {
+    if (strcmp(genState->defs[i], statement) == 0)
+      return i;
+  }
   return -1;
 }
 
@@ -166,72 +209,30 @@ void printDefSymbols(GeneratorState *state) {
   }
 }
 
-void loadFileToBuffer(char *path, char *bp) {
-  FILE *fp;
-  if ((fp = fopen(path, "r")) == NULL)
-    log_error("Could not open file\n");
-  else {
-    while ((*bp++ = fgetc(fp)) != EOF) {
+bool isItemInHistory(GeneratorState *state, int defIndex, SetType setType) {
+  if (setType == FIRSTSET) {
+    FirstSet *set = state->first_set_history->arr_sets[defIndex];
+    if (set != NULL && set->set != NULL && set->itemCount != NULL) {
+      return true;
     }
-    *--bp = '\0';
-  }
-  fclose(fp);
-}
-
-void printToken(Token tokens[], int it) {
-  char *content = tokens[it].content;
-  int type = tokens[it].type;
-  printf("%d: %s %s\n", it, content, typeToString(type));
-}
-
-void trimProdStrings(Token tokens[], int it) {
-  tokens[it].content = tokens[it].content + 3;
-  char *fp = strstr(tokens[it].content, "</p>");
-  tokens[it].content[fp - tokens[it].content] = '\0';
-}
-
-char *typeToString(int type) {
-  static char *result;
-  switch (type) {
-  case 0:
-    result = "PROD";
-    break;
-  case 1:
-    result = "DEF";
-    break;
-  default:
-    result = "";
-  }
-  return result;
-}
-
-char *concatArrayOfStrings(char **strings, int stringCount, char *separator) {
-  char *result = malloc(sizeof(char) * 1000);
-  for (int i = 0; i < stringCount; i++) {
-    sprintf(result, "%s%s%s", result, separator, strings[i]);
-  }
-
-  return result;
-}
-
-char *concatStatements(Statement **statements, int statementCount,
-                       char *separator) {
-  char *result = malloc(sizeof(char) * 1000);
-  for (int i = 0; i < statementCount; i++) {
-    sprintf(result, "%s%s%s", result, separator, statements[i]->content);
-  }
-
-  return result;
-}
-
-bool doesSetContainEpsilon(FirstSet *set) {
-  for (int i = 0; i < set->itemCount; i++) {
-    if (strcmp(set->set[i], "epsilon") == 0) {
+  } else {
+    if (state->follow_set_history->arr_sets[defIndex] != NULL) {
       return true;
     }
   }
-
   return false;
+}
+
+void printHistory(GeneratorState *state, SetType type) {
+  if (type == FIRSTSET) {
+    for (int i = 0; i < state->defCount; i++) {
+      log_trace("%d %s", i, state->first_set_history->arr_sets[i]);
+    }
+  } else {
+    for (int i = 0; i < state->defCount; i++) {
+      log_trace("%d %s", i, state->follow_set_history->arr_sets[i]);
+    }
+  }
 }
 
 int getTerminals(char **terminals, GeneratorState *state) {
@@ -282,54 +283,4 @@ int getNonTerminals(char **nonterminals, GeneratorState *state) {
   }
 
   return counter;
-}
-
-int getTerminalIndexFromIndex(ParsingTable *table, char *name) {
-  int terminalCount = table->terminalCount;
-  char **terminals = table->terminals;
-
-  for (int i = 0; i < terminalCount; i++) {
-    if (strcmp(terminals[i], name) == 0) {
-      return i;
-    }
-  }
-
-  return -1;
-}
-
-int getNonTerminalIndexFromIndex(ParsingTable *table, char *name) {
-  int nonterminalCount = table->nonterminalCount;
-  char **nonterminals = table->nonterminals;
-
-  for (int i = 0; i < nonterminalCount; i++) {
-    if (strcmp(nonterminals[i], name) == 0) {
-      return i;
-    }
-  }
-
-  return -1;
-}
-
-char *get_first_set_string(FirstSet *set) {
-  char *result = malloc(sizeof(char) * set->itemCount * 50);
-  for (int i = 0; i < set->itemCount; i++) {
-    if (i < set->itemCount - 1)
-      sprintf(result, "%s \'%s\' |", result, set->set[i]);
-    else
-      sprintf(result, "%s \'%s\'", result, set->set[i]);
-  }
-
-  return result;
-}
-
-char *get_follow_set_string(FollowSet *set) {
-  char *result = malloc(sizeof(char) * set->itemCount * 50);
-  for (int i = 0; i < set->itemCount; i++) {
-    if (i < set->itemCount - 1)
-      sprintf(result, "%s \'%s\' |", result, set->set[i]);
-    else
-      sprintf(result, "%s \'%s\'", result, set->set[i]);
-  }
-
-  return result;
 }

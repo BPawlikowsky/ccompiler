@@ -48,7 +48,9 @@ void log_trace(const char *msg, ...) {
   va_list args;
   va_start(args, msg);
 
+#ifdef LOG_TRACE
   logger(args, msg, TRACE);
+#endif
 
   va_end(args);
 }
@@ -57,7 +59,9 @@ void log_error(const char *msg, ...) {
   va_list args;
   va_start(args, msg);
 
+#ifdef LOG_ERROR
   logger(args, msg, ERROR);
+#endif
 
   va_end(args);
 }
@@ -66,7 +70,9 @@ void log_warn(const char *msg, ...) {
   va_list args;
   va_start(args, msg);
 
+#ifdef LOG_WARN
   logger(args, msg, WARN);
+#endif
 
   va_end(args);
 }
@@ -75,7 +81,9 @@ void log_debug(const char *msg, ...) {
   va_list args;
   va_start(args, msg);
 
+#ifdef LOG_DEBUG
   logger(args, msg, DEBUG);
+#endif
 
   va_end(args);
 }
@@ -84,7 +92,9 @@ void log_info(const char *msg, ...) {
   va_list args;
   va_start(args, msg);
 
+#ifdef LOG_DEBUG
   logger(args, msg, INFO);
+#endif
 
   va_end(args);
 }

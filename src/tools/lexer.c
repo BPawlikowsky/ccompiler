@@ -91,5 +91,5 @@ void freeBuffers(Token *tokens, int arrIndex, Regex **lexicon, int count) {
   for (int i = 0; i < count; i++) {
     regfree(&(lexicon[i]->r));
   }
-  printf("Lexer buffers free\n");
+  log_info("Lexer buffers free\n");
 }

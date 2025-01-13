@@ -1,6 +1,7 @@
 #pragma once
 
 #include "parserGeneratorUtils.h"
+#include "../tools/settools.h"
 
 ParsingTable *createParsingTable(GeneratorState *state);
 bool isStringInFollowSet(char *str, FollowSet *set);

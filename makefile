@@ -1,38 +1,44 @@
 CC=clang
 CFLAGS=-lc --debug
 SRC_DIR = ./src/
+TOOLS_DIR = ./src/tools/
+LL1_DIR = ./src/LL1/
+UTILS_DIR = ./src/utils/
 SOURCES = ${SRC_DIR}*.c
 
-debug: remove_parser parser
-	./parser
+debug: remove_parser LL1parser
+	./LL1parser
 
 compile: 
 	${CC} ${CFLAGS} ${SOURCES}
 	
-parserGenerator: remove_parser_generator
+LL1Generator: remove_parser_generator
 	${CC} ${CFLAGS} \
-	${SRC_DIR}lexer.c \
-	${SRC_DIR}parserGeneratorUtils.c \
-	${SRC_DIR}firstset.c \
-	${SRC_DIR}followset.c \
-	${SRC_DIR}parsingTable.c \
-	${SRC_DIR}logger.c \
-	${SRC_DIR}parserGenerator.c \
-	-o parserGenerator
+	${TOOLS_DIR}lexer.c \
+	${LL1_DIR}parserGeneratorUtils.c \
+	${TOOLS_DIR}firstset.c \
+	${TOOLS_DIR}followset.c \
+	${LL1_DIR}parsingTable.c \
+	${TOOLS_DIR}logger.c \
+	${TOOLS_DIR}settools.c \
+	${UTILS_DIR}utils.c \
+	${LL1_DIR}LL1Generator.c \
+	-o LL1Generator
 	
-parser:
+LL1parser:
 	${CC} ${CFLAGS} \
-	${SRC_DIR}parser.c \
-	${SRC_DIR}lexer.c \
-	${SRC_DIR}logger.c \
-	${SRC_DIR}parserGeneratorUtils.c \
-	-o parser
+	${TOOLS_DIR}logger.c \
+	${TOOLS_DIR}lexer.c \
+	${UTILS_DIR}utils.c \
+	${LL1_DIR}parserGeneratorUtils.c \
+	${LL1_DIR}LL1parser.c \
+	-o LL1parser
 
 remove_parser:
-	rm -f parser
+	rm -f LL1parser
 	
 remove_parser_generator:
-	rm -f parserGenerator
+	rm -f LL1Generator
 
 clean: remove_parser remove_parser_generator
 	

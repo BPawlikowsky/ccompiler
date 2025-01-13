@@ -1,14 +1,19 @@
-#include "parserGenerator.h"
+#include "LL1Generator.h"
 
-int main() {
+int main(int argc, char *argv[]) {
+  if (argc < 2) {
+    log_error("no filename given for grammar...");
+    exit(EXIT_FAILURE);
+  }
   Token tokens[1000];
   char *buffer = (char *)malloc(20000 * sizeof(char));
-  loadFileToBuffer("./c89_mod.txt", buffer);
+  loadFileToBuffer(argv[1], buffer);
 
   int tokenCount =
       lexer(buffer, tokens, lexicon, tokenTypes, TOKEN_TYPES_COUNT);
-  free(buffer);
   log_info("Token count: %d", tokenCount);
+
+  free(buffer);
 
   // Count definitions and productions
   int it = 0;
@@ -105,7 +110,7 @@ int main() {
   genState.nonterminalCount = nonterminalCount;
 
   FirstSetHistory *first_set_history = malloc(sizeof(FirstSetHistory));
-  first_set_history->arr_sets = malloc(sizeof(char **) * defCount);
+  first_set_history->arr_sets = malloc(sizeof(FirstSet *) * defCount);
   first_set_history->arr_visited_count = malloc(sizeof(int *) * defCount);
 
   for (int i = 0; i < defCount; i++) {
@@ -116,7 +121,7 @@ int main() {
   genState.first_set_history = first_set_history;
 
   FollowSetHistory *follow_set_history = malloc(sizeof(FollowSetHistory));
-  follow_set_history->arr_sets = malloc(sizeof(char **) * defCount);
+  follow_set_history->arr_sets = malloc(sizeof(FollowSet *) * defCount);
   follow_set_history->arr_visited_count = malloc(sizeof(int *) * defCount);
 
   for (int i = 0; i < defCount; i++) {
