@@ -6,14 +6,14 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
   Token tokens[1000];
-  char *buffer = (char *)malloc(20000 * sizeof(char));
+  char *buffer = (char *)get_memory(20000 * sizeof(char));
   loadFileToBuffer(argv[1], buffer);
 
   int tokenCount =
       lexer(buffer, tokens, lexicon, tokenTypes, TOKEN_TYPES_COUNT);
   log_info("Token count: %d", tokenCount);
 
-  free(buffer);
+  // free(buffer);
 
   // Count definitions and productions
   int it = 0;
@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
   log_info("Productions: %d", prodCount);
 
   // Parse definitions and productions
-  Definition **definitions = malloc(sizeof(Definition *) * defCount);
+  Definition **definitions = get_memory(sizeof(Definition *) * defCount);
 
   char *defs[defCount];
   it = 0;
@@ -48,8 +48,8 @@ int main(int argc, char *argv[]) {
 
       // Add def to definitions array
       defs[id] = tokens[it].content;
-      Definition *definition = malloc(sizeof(Definition));
-      definition->productions = malloc(sizeof(Production) * prodCount);
+      Definition *definition = get_memory(sizeof(Definition));
+      definition->productions = get_memory(sizeof(Production) * prodCount);
 
       definition->name = tokens[it].content;
       definition->productionCount = 0;
@@ -59,8 +59,8 @@ int main(int argc, char *argv[]) {
     }
     // Parse productions
     if (tokens[it].type == PROD) {
-      Production *prod = malloc(sizeof(Production));
-      prod->statements = malloc(sizeof(Statement) * 100);
+      Production *prod = get_memory(sizeof(Production));
+      prod->statements = get_memory(sizeof(Statement) * 100);
 
       trimProdStrings(tokens, it);
       prod->statementCount = 0;
@@ -78,14 +78,14 @@ int main(int argc, char *argv[]) {
   log_info("*** DEFINITIONS ***");
   printDefs(definitions, defCount);
 
-  FirstSet **firstSets = malloc(sizeof(FirstSet *) * defCount);
-  FollowSet **followSets = malloc(sizeof(FollowSet *) * defCount);
-  FollowSet *startSet = malloc(sizeof(FollowSet));
+  FirstSet **firstSets = get_memory(sizeof(FirstSet *) * defCount);
+  FollowSet **followSets = get_memory(sizeof(FollowSet *) * defCount);
+  FollowSet *startSet = get_memory(sizeof(FollowSet));
 
   // ADDING $ SYMBOL TO START FOLLOW SET
   startSet->itemCount = 1;
-  startSet->set = malloc(sizeof(char *));
-  startSet->set[0] = malloc(sizeof(char) * 2);
+  startSet->set = get_memory(sizeof(char *));
+  startSet->set[0] = get_memory(sizeof(char) * 2);
   startSet->set[0] = "$";
 
   followSets[0] = startSet;
@@ -99,8 +99,8 @@ int main(int argc, char *argv[]) {
                              .followSetCounter = 1,
                              .followSets = followSets};
 
-  char **terminals = malloc(sizeof(char *) * 150);
-  char **nonterminals = malloc(sizeof(char *) * 150);
+  char **terminals = get_memory(sizeof(char *) * 150);
+  char **nonterminals = get_memory(sizeof(char *) * 150);
   int terminalCount = getTerminals(terminals, &genState);
   int nonterminalCount = getNonTerminals(nonterminals, &genState);
 
@@ -109,23 +109,23 @@ int main(int argc, char *argv[]) {
   genState.nonterminals = nonterminals;
   genState.nonterminalCount = nonterminalCount;
 
-  FirstSetHistory *first_set_history = malloc(sizeof(FirstSetHistory));
-  first_set_history->arr_sets = malloc(sizeof(FirstSet *) * defCount);
-  first_set_history->arr_visited_count = malloc(sizeof(int *) * defCount);
+  FirstSetHistory *first_set_history = get_memory(sizeof(FirstSetHistory));
+  first_set_history->arr_sets = get_memory(sizeof(FirstSet *) * defCount);
+  first_set_history->arr_visited_count = get_memory(sizeof(int *) * defCount);
 
   for (int i = 0; i < defCount; i++) {
-    first_set_history->arr_visited_count[i] = malloc(sizeof(int));
+    first_set_history->arr_visited_count[i] = get_memory(sizeof(int));
     *first_set_history->arr_visited_count[i] = 0;
   }
 
   genState.first_set_history = first_set_history;
 
-  FollowSetHistory *follow_set_history = malloc(sizeof(FollowSetHistory));
-  follow_set_history->arr_sets = malloc(sizeof(FollowSet *) * defCount);
-  follow_set_history->arr_visited_count = malloc(sizeof(int *) * defCount);
+  FollowSetHistory *follow_set_history = get_memory(sizeof(FollowSetHistory));
+  follow_set_history->arr_sets = get_memory(sizeof(FollowSet *) * defCount);
+  follow_set_history->arr_visited_count = get_memory(sizeof(int *) * defCount);
 
   for (int i = 0; i < defCount; i++) {
-    follow_set_history->arr_visited_count[i] = malloc(sizeof(int));
+    follow_set_history->arr_visited_count[i] = get_memory(sizeof(int));
     *follow_set_history->arr_visited_count[i] = 0;
   }
 
@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
 
   // PRINT OR SAVE
   {
-    char *outputbuffer = malloc(sizeof(char) * 100000);
+    char *outputbuffer = get_memory(sizeof(char) * 100000);
     char *p = outputbuffer;
 
     for (int i = 0; i < genState.firstSetCounter; i++) {
@@ -167,10 +167,10 @@ int main(int argc, char *argv[]) {
     fprintf(fptr, "%s", outputbuffer);
 
     fclose(fptr);
-    free(outputbuffer);
+    // free(outputbuffer);
   }
   {
-    char *outputbuffer = malloc(sizeof(char) * 100000);
+    char *outputbuffer = get_memory(sizeof(char) * 100000);
     char *p = outputbuffer;
 
     for (int i = 0; i < genState.followSetCounter; i++) {
@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
     fprintf(fptr, "%s", outputbuffer);
 
     fclose(fptr);
-    free(outputbuffer);
+    // free(outputbuffer);
   }
 
   // printDefSymbols(&genState);
@@ -217,13 +217,13 @@ void addStatements(Production *prod, Token tokens[], int it) {
   char *finish = &tokens[it].content[strlen(tokens[it].content)];
   int is = 0;
   while (p < finish) {
-    Statement *statement = malloc(sizeof(Statement));
+    Statement *statement = get_memory(sizeof(Statement));
     assert(statement != NULL);
     char *statementEnd = strstr(statementsLeft, " ");
 
     if (statementEnd == NULL) {
       int strLen = strlen(statementsLeft);
-      statement->content = (char *)malloc(sizeof(char) * strLen + 1);
+      statement->content = (char *)get_memory(sizeof(char) * strLen + 1);
       assert(statement->content != NULL);
 
       strcpy(statement->content, statementsLeft);
@@ -238,7 +238,7 @@ void addStatements(Production *prod, Token tokens[], int it) {
 
     long offset = statementEnd - p;
 
-    statement->content = (char *)malloc(sizeof(char) * (int)offset + 1);
+    statement->content = (char *)get_memory(sizeof(char) * (int)offset + 1);
     assert(statement->content != NULL);
 
     strncpy(statement->content, statementsLeft, offset);
@@ -282,7 +282,7 @@ void addTypeToStatements(Definition *defs[], int defCount, char *strDefs[]) {
 void saveParsingTableAsCSV(ParsingTable *table) {
   // --- Save parsing table as csv table ---
 
-  char *outputbuffer = malloc(sizeof(char) * 100000);
+  char *outputbuffer = get_memory(sizeof(char) * 100000);
   char *p = outputbuffer;
 
   sprintf(p, "\"non-terminals\",");
@@ -331,7 +331,7 @@ void saveParsingTableAsCSV(ParsingTable *table) {
   fprintf(fptr, "%s", outputbuffer);
 
   fclose(fptr);
-  free(outputbuffer);
+  // free(outputbuffer);
 
   // --- csv end ---
 }

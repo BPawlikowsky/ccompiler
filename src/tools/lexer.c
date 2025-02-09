@@ -31,7 +31,7 @@ int lexer(char *buffer, Token *tokens, Regex **lexicon, TokenType *tokenTypes,
       if (e == 0 && result[0].rm_so == 0) {
         error_count = 0;
         token.type = tokenTypes[i];
-        token.content = malloc(STR_LENGTH);
+        token.content = get_memory(STR_LENGTH);
 
         copyResult(result[0].rm_so, result[0].rm_eo, bp, token.content);
 

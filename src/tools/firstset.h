@@ -3,6 +3,7 @@
 
 #include "../types.h"
 #include "settools.h"
+#include "../memory.h"
 
 FirstSet *getFirstSet(int defIndex, GeneratorState *genState);
 bool doesRightHandSideContainTerminal(Definition *definition);

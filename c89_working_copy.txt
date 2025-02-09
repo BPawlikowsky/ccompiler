@@ -59,44 +59,59 @@ multiplicative_expression:
 <p>cast_expression multiplicative_expression_tail</p>
 
 multiplicative_expression_tail:
-<p>* cast_expression multiplicative_expression_tail</p>
-<p>/ cast_expression multiplicative_expression_tail</p>
-<p>% cast_expression multiplicative_expression_tail</p>
+<p>multiplicative_expression_ops cast_expression multiplicative_expression_tail</p>
 <p>epsilon</p>
+
+multiplicative_expression_ops:
+<p>*</p>
+<p>/</p>
+<p>%</p>
 
 additive_expression:
 <p>multiplicative_expression additive_expression_tail</p>
 
 additive_expression_tail:
-<p>+ multiplicative_expression additive_expression_tail</p>
-<p>- multiplicative_expression additive_expression_tail</p>
+<p>additive_expression_ops multiplicative_expression additive_expression_tail</p>
 <p>epsilon</p>
+
+additive_expression_ops:
+<p>+</p>
+<p>-</p>
 
 shift_expression:
 <p>additive_expression shift_expression_tail</p>
 
 shift_expression_tail:
-<p>LEFT_OP additive_expression shift_expression_tail</p>
-<p>RIGHT_OP additive_expression shift_expression_tail</p>
+<p>shift_expression_ops additive_expression shift_expression_tail</p>
 <p>epsilon</p>
+
+shift_expression_ops:
+<p>LEFT_OP</p>
+<p>RIGHT_OP</p>
 
 relational_expression:
 <p>shift_expression relational_expression_tail</p>
 
 relational_expression_tail:
-<p>< shift_expression relational_expression_tail</p>
-<p>> shift_expression relational_expression_tail</p>
-<p>LE_OP shift_expression relational_expression_tail</p>
-<p>GE_OP shift_expression relational_expression_tail</p>
+<p>relational_expression_ops shift_expression relational_expression_tail</p>
 <p>epsilon</p>
+
+relational_expression_ops:
+<p><</p>
+<p>></p>
+<p>LE_OP</p>
+<p>GE_OP</p>
 
 equality_expression:
 <p>relational_expression equality_expression_tail</p>
 
 equality_expression_tail:
-<p>EQ_OP relational_expression equality_expression_tail</p>
-<p>NE_OP relational_expression equality_expression_tail</p>
+<p>equality_expression_ops relational_expression equality_expression_tail</p>
 <p>epsilon</p>
+
+equality_expression_ops:
+<p>EQ_OP</p>
+<p>NE_OP</p>
 
 and_expression:
 <p>equality_expression and_expression_tail</p>
@@ -145,7 +160,7 @@ assignment_expression:
 <p>unary_expression assignment_operator assignment_expression</p>
 
 assignment_operator:
-<p>=</p>
+<p>ASSIGN</p>
 <p>MUL_ASSIGN</p>
 <p>DIV_ASSIGN</p>
 <p>MOD_ASSIGN</p>
@@ -184,7 +199,6 @@ declaration_specifiers_prefix:
 declaration_specifiers_tail:
 <p>declaration_specifiers_prefix declaration_specifiers_tail</p>
 <p>epsilon</p>
-
 
 init_declarator_list:
 <p>init_declarator init_declarator_list_tail</p>
@@ -413,7 +427,7 @@ direct_abstract_declarator_func:
 <p>parameter_type_list )</p>
 
 initializer:
-<p>unary_expression assignment_expression_tail</p>
+<p>unary_expression assignment_operator assignment_expression</p>
 <p>{ initializer_list initializer_suffix</p>
 
 initializer_suffix:
@@ -451,11 +465,8 @@ compound_statement_suffix:
 <p>declaration_list compound_statement_suffix_decl</p>
 
 compound_statement_suffix_decl:
-<p>statement_list_opt }</p>
-
-statement_list_opt:
-<p>statement_list</p>
-<p>epsilon</p>
+<p>statement_list }</p>
+<p>}</p>
 
 declaration_list:
 <p>declaration declaration_list_tail</p>
@@ -472,8 +483,15 @@ statement_list_tail:
 <p>epsilon</p>
 
 expression_statement:
-<p>;</p>
 <p>expression ;</p>
+<p>empty_expression_statement</p>
+
+empty_expression_statement:
+<p>;</p>
+
+expression_opt:
+<p>expression</p>
+<p>epsilon</p>
 
 selection_statement:
 <p>if ( expression ) statement selection_statement_suffix</p>
@@ -484,7 +502,7 @@ selection_statement_suffix:
 <p>epsilon</p>
 
 iteration_statement:
-<p>while ( expression ) while_suffix</p>
+<p>while while_suffix</p>
 <p>do statement while ( expression ) while_suffix</p>
 <p>for ( expression_statement expression_statement expression_opt ) statement</p>
 
@@ -492,16 +510,12 @@ while_suffix:
 <p>;</p>
 <p>statement</p>
 
-expression_opt:
-<p>expression</p>
-<p>epsilon</p>
 
 jump_statement:
 <p>GOTO IDENTIFIER ;</p>
 <p>CONTINUE ;</p>
 <p>BREAK ;</p>
-<p>return ;</p>
-<p>return expression ;</p>
+<p>RETURN expression_statement</p>
 
 translation_unit:
 <p>external_declaration translation_unit_tail</p>

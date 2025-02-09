@@ -2,6 +2,7 @@
 
 #include "../types.h"
 #include "../tools/logger.h"
+#include "../memory.h"
 
 // General
 void loadFileToBuffer(char *path, char *bp);

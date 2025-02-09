@@ -2,6 +2,7 @@
 
 #include "parserGeneratorUtils.h"
 #include "../tools/settools.h"
+#include "../memory.h"
 
 ParsingTable *createParsingTable(GeneratorState *state);
 bool isStringInFollowSet(char *str, FollowSet *set);

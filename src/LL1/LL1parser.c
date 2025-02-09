@@ -1,4 +1,5 @@
 #include "LL1parser.h"
+#include "parserGeneratorUtils.h"
 
 ParsingTable *loadParsingTable() {
   FILE *fp = fopen("ptable.dat", "rb");
@@ -6,34 +7,34 @@ ParsingTable *loadParsingTable() {
     log_error("error: could not open file");
   }
 
-  ParsingTable *ptp = malloc(sizeof(ParsingTable));
+  ParsingTable *ptp = get_memory(sizeof(ParsingTable));
 
   fread(ptp, sizeof(ParsingTable), 1, fp);
   log_trace("table size: %d", ptp->tableSize);
   log_trace("nonterminal count: %d", ptp->nonterminalCount);
   log_trace("terminal count: %d", ptp->terminalCount);
 
-  TableEntry **table = malloc(sizeof(TableEntry) * ptp->tableSize);
+  TableEntry **table = get_memory(sizeof(TableEntry) * ptp->tableSize);
 
   for (int tableEntryIndex = 0; tableEntryIndex < ptp->tableSize;
        tableEntryIndex++) {
-    table[tableEntryIndex] = malloc(sizeof(TableEntry));
+    table[tableEntryIndex] = get_memory(sizeof(TableEntry));
     fread(table[tableEntryIndex], sizeof(TableEntry), 1, fp);
 
     if (table[tableEntryIndex]->error == false) {
-      table[tableEntryIndex]->production = malloc(sizeof(Production));
+      table[tableEntryIndex]->production = get_memory(sizeof(Production));
       Production *production = table[tableEntryIndex]->production;
       fread(production, sizeof(Production), 1, fp);
 
       production->statements =
-          malloc(sizeof(Statement) * production->statementCount);
+          get_memory(sizeof(Statement) * production->statementCount);
 
       for (int statementIndex = 0; statementIndex < production->statementCount;
            statementIndex++) {
-        production->statements[statementIndex] = malloc(sizeof(Statement));
+        production->statements[statementIndex] = get_memory(sizeof(Statement));
         Statement *statement = production->statements[statementIndex];
         fread(statement, sizeof(Statement), 1, fp);
-        statement->content = malloc(sizeof(char) * statement->stringLength);
+        statement->content = get_memory(sizeof(char) * statement->stringLength);
         fread(statement->content, sizeof(char) * statement->stringLength, 1,
               fp);
       }
@@ -44,18 +45,18 @@ ParsingTable *loadParsingTable() {
   ptp->table = table;
 
   FILE *file = fopen("nonterminals.txt", "r");
-  ptp->nonterminals = malloc(sizeof(char *) * ptp->nonterminalCount);
+  ptp->nonterminals = get_memory(sizeof(char *) * ptp->nonterminalCount);
   for (int i = 0; i < ptp->nonterminalCount; i++) {
-    char *result = malloc(sizeof(char) * 50);
+    char *result = get_memory(sizeof(char) * 50);
     fscanf(file, "%s\n", result);
     ptp->nonterminals[i] = result;
   }
   fclose(file);
 
   file = fopen("terminals.txt", "r");
-  ptp->terminals = malloc(sizeof(char *) * ptp->terminalCount);
+  ptp->terminals = get_memory(sizeof(char *) * ptp->terminalCount);
   for (int i = 0; i < ptp->terminalCount; i++) {
-    char *result = malloc(sizeof(char) * 50);
+    char *result = get_memory(sizeof(char) * 50);
     fscanf(file, "%s\n", result);
     ptp->terminals[i] = result;
   }
@@ -87,10 +88,10 @@ ParsingTable *loadParsingTable() {
   return ptp;
 }
 
-char *primitives_strings[] = {"void",  "char",   "short",  "int",     "long",
-                              "float", "double", "signed", "unsigned"};
+char *primitives_strings[] = {"void", "char",  "short", "int",
+                              "long", "float", "double"};
 
-#define PRIMITIVE_COUNT 9
+#define PRIMITIVE_COUNT 7
 
 bool isStringAPrimitive(const char *content) {
   for (int i = 0; i < PRIMITIVE_COUNT; i++) {
@@ -105,15 +106,15 @@ bool isStringAPrimitive(const char *content) {
 int main(void) {
   ParsingTable *parsingTable = loadParsingTable();
   Token tokens[10000];
-  char *buffer = (char *)malloc(2000 * sizeof(char));
+  char *buffer = (char *)get_memory(2000 * sizeof(char));
   loadFileToBuffer("test.c", buffer);
 
   int tokenCount = lexer(buffer, tokens, arr_c_lexicon, arr_c_token_types,
                          C_TOKEN_TYPES_COUNT);
-  free(buffer);
+  // free(buffer);
   log_trace("Token count: %d", tokenCount);
 
-  char **stack = malloc(sizeof(char *) * tokenCount * tokenCount);
+  char **stack = get_memory(sizeof(char *) * tokenCount * tokenCount);
   stack[0] = "$";
   stack[1] = "start";
 
@@ -124,7 +125,9 @@ int main(void) {
   bool isEnum = false;
   bool isPrimitive = false;
 
-  Token *endToken = malloc(sizeof(Token));
+  bool foo_bool = true;
+
+  Token *endToken = get_memory(sizeof(Token));
   endToken->content = "$";
   endToken->type = COUNT;
   tokens[tokenCount++] = *endToken;
@@ -150,7 +153,7 @@ int main(void) {
     char *tokenString = token.content;
 
     log_debug("Parsing token no. %d: \"%s\" of type %s", tokenCounter,
-              token.content, arr_c_token_type_strings[token.type]);
+              tokenString, arr_c_token_type_strings[token.type]);
     char prev_output[2000] = "";
     sprintf(prev_output, "%sPrevious 10 tokens: \"", prev_output);
     for (int i = (tokenCounter - 10 >= 0) ? tokenCounter - 10 : tokenCounter;
@@ -178,11 +181,11 @@ int main(void) {
     }
     log_debug("%s", next_output);
 
-    if (strcmp(token.content, "enum") == 0) {
+    if (strcmp(tokenString, "enum") == 0) {
       isEnum = true;
     }
 
-    if (isStringAPrimitive(token.content)) {
+    if (isStringAPrimitive(tokenString)) {
       isPrimitive = true;
     }
 
@@ -192,6 +195,22 @@ int main(void) {
 
     if (token.type == STRING) {
       tokenString = "STRING_LITERAL";
+    }
+
+    if (token.type == KEYWORD && strcmp(tokenString, "case") == 0) {
+      tokenString = "CASE";
+    }
+
+    if (token.type == KEYWORD && strcmp(tokenString, "break") == 0) {
+      tokenString = "BREAK";
+    }
+
+    if (token.type == KEYWORD && strcmp(tokenString, "default") == 0) {
+      tokenString = "DEFAULT";
+    }
+
+    if (token.type == KEYWORD && strcmp(tokenString, "return") == 0) {
+      tokenString = "RETURN";
     }
 
     if (token.type == INTEGER_CONST || token.type == FLOAT_CONST ||
@@ -208,35 +227,54 @@ int main(void) {
       continue;
     }
 
-    else if (strcmp(token.content, "++") == 0) {
+    else if (strcmp(tokenString, "++") == 0) {
       tokenString = "INC_OP";
     }
 
-    else if (strcmp(token.content, "--") == 0) {
+    else if (strcmp(tokenString, "--") == 0) {
       tokenString = "DEC_OP";
     }
 
-    if (strcmp(token.content, "=") == 0 && isEnum) {
+    if (strcmp(tokenString, "=") == 0 && isEnum) {
       tokenString = "ENUM_EQ";
     }
 
-    // if (strcmp(token.content, "=") == 0 && !isEnum && !isPrimitive) {
-    //   tokenString = "ASSIGN";
-    // }
+    if (strcmp(tokenString, "=") == 0 && !isEnum && !isPrimitive) {
+      tokenString = "ASSIGN";
+      if (foo_bool) {
+        topStackItem = "assignment_operator";
+        foo_bool = false;
+      }
+    }
+
+    if (strcmp(tokenString, "=") == 0 && !isEnum && isPrimitive) {
+      if (foo_bool) {
+        topStackItem = "init_declarator_suffix";
+        foo_bool = false;
+      }
+    }
 
     log_debug("Stack item \'%s\' of type: %s", topStackItem,
               topItemType == NONTERMINAL ? "NONTERMINAL" : "TERMINAL");
+
+    log_debug("FLAGS: isEnum = %s, isPrimitive = %s\n",
+              isEnum ? "true" : "false", isPrimitive ? "true" : "false");
 
     switch (topItemType) {
     case NONTERMINAL: {
       log_debug("case NONTERMINAL");
 
       int col = getTerminalIndexFromIndex(parsingTable, tokenString);
-      int row = getNonTerminalIndexFromIndex(parsingTable, stack[stackCounter]);
+      int row = getNonTerminalIndexFromIndex(parsingTable, topStackItem);
+
+      if (errorCount > 0) {
+        row = getNonTerminalIndexFromIndex(parsingTable, "epsilon");
+        errorCount = 0;
+      }
 
       log_debug("Column: %d | token type: %s, token content: \"%s\"", col,
                 arr_c_token_type_strings[token.type], tokenString);
-      log_debug("Row: %d | Current stack item: %s", row, stack[stackCounter]);
+      log_debug("Row: %d | Current stack item: %s", row, topStackItem);
 
       int tableIndex = (row * parsingTable->terminalCount) + col;
       log_debug("tableIndex: (%d * %d) + %d = %d", row,
@@ -267,9 +305,9 @@ int main(void) {
           stack[++stackCounter] = statement->content;
         }
       } else {
-        log_error("Error on \'%s\' stack item and token \"%s\"!",
-                  stack[stackCounter], token.content);
-        log_debug("Error popping \'%s\' off the stack!", stack[stackCounter]);
+        log_error("Error on \'%s\' stack item and token \"%s\"!", topStackItem,
+                  tokenString);
+        log_debug("Error popping \'%s\' off the stack!", topStackItem);
         if (stackCounter <= 0) {
           log_debug("Error: stack is empty and no $ symbol is there.");
           log_error("Error, could not parse stack!");
@@ -280,25 +318,27 @@ int main(void) {
     }; break;
     case TERMINAL: {
       log_debug("case TERMINAL");
-      log_debug("Comparing \"%s\" to \"%s\"", tokenString, stack[stackCounter]);
-      if (strcmp(tokenString, stack[stackCounter]) == 0) {
-        log_debug("popping \'%s\' off the stack.", stack[stackCounter]);
+      log_debug("Comparing \"%s\" to \"%s\"", tokenString, topStackItem);
+      if (strcmp(tokenString, topStackItem) == 0) {
+        log_debug("popping \'%s\' off the stack.", topStackItem);
 
-        if (strcmp(stack[stackCounter], "ENUM_EQ") == 0) {
+        if (strcmp(topStackItem, "ENUM_EQ") == 0) {
           isEnum = false;
         }
-        if (strcmp(stack[stackCounter], "ASSIGN") == 0 ||
-            strcmp(stack[stackCounter], "{") == 0) {
+        if (strcmp(topStackItem, "ASSIGN") == 0 ||
+            strcmp(topStackItem, "{") == 0) {
           isPrimitive = false;
+          foo_bool = true;
         }
 
         /* POP STUFF OFF THE STACK */
         stackCounter--;
+        errorCount = 0;
         if (tokenCounter < tokenCount - 1) {
           tokenCounter++;
         }
       } else {
-        log_debug("Error popping \'%s\' off the stack!", stack[stackCounter]);
+        log_debug("Error popping \'%s\' off the stack!", topStackItem);
         if (stackCounter <= 0) {
           log_debug("Error: stack is empty and no $ symbol is there.");
           log_error("Error, could not parse stack!");

@@ -2,6 +2,7 @@
 
 #include "../types.h"
 #include "logger.h"
+#include "../memory.h"
 
 int lexer(char *buffer, Token *tokens, Regex **lexicon, TokenType *tokenTypes,
           int tokenTypeCount);

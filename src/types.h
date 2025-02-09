@@ -71,6 +71,7 @@ typedef struct Definition {
 } Definition;
 
 typedef struct FirstSet {
+  char *definition_name;
   char **set;
   int itemCount;
 } FirstSet;

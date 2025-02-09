@@ -24,7 +24,7 @@ int doesStringExistInArray(char *strings[], int stringsCount,
 }
 
 char *concatArrayOfStrings(char **strings, int stringCount, char *separator) {
-  char *result = malloc(sizeof(char) * 1000);
+  char *result = get_memory(sizeof(char) * 1000);
   for (int i = 0; i < stringCount; i++) {
     sprintf(result, "%s%s%s", result, separator, strings[i]);
   }
@@ -47,7 +47,7 @@ char *getStringId(int def_index, bool upper_case) {
   }
   i_result += alphabet_offset;
 
-  char *s_result = malloc(sizeof(char) * 3);
+  char *s_result = get_memory(sizeof(char) * 3);
   if (multiplier == 0)
     sprintf(s_result, "%c", i_result);
   else
@@ -89,7 +89,7 @@ void trimProdStrings(Token tokens[], int it) {
 
 void printDefs(Definition *defs[], int defCount) {
   int i = 0;
-  char *str = malloc(sizeof(char) * 200);
+  char *str = get_memory(sizeof(char) * 200);
   while (i < defCount) {
     Definition *def = defs[i];
     sprintf(str, "%d: \"%s\": ", i, def->name);
@@ -132,7 +132,7 @@ int getDefinitionIndexFromDefs(Definition **defs, int count, char *name) {
 
 char *concatStatements(Statement **statements, int statementCount,
                        char *separator) {
-  char *result = malloc(sizeof(char) * 1000);
+  char *result = get_memory(sizeof(char) * 1000);
   for (int i = 0; i < statementCount; i++) {
     sprintf(result, "%s%s%s", result, separator, statements[i]->content);
   }
@@ -168,7 +168,7 @@ void printDefSymbols(GeneratorState *state) {
   int terminalCount = state->terminalCount;
   int defCount = state->defCount;
   int i = 0;
-  char *str = malloc(sizeof(char) * 200);
+  char *str = get_memory(sizeof(char) * 200);
 
   while (i < defCount) {
     Definition *def = defs[i];
@@ -212,7 +212,7 @@ void printDefSymbols(GeneratorState *state) {
 bool isItemInHistory(GeneratorState *state, int defIndex, SetType setType) {
   if (setType == FIRSTSET) {
     FirstSet *set = state->first_set_history->arr_sets[defIndex];
-    if (set != NULL && set->set != NULL && set->itemCount != NULL) {
+    if (set != NULL && set->set != NULL && set->itemCount != 0) {
       return true;
     }
   } else {

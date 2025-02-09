@@ -5,6 +5,7 @@
 #include "../tools/lexer.h"
 #include "../utils/utils.h"
 #include "parserGeneratorUtils.h"
+#include "../memory.h"
 
 Regex preprocRegex = {0, .expression = "#[[:print:]]+"};
 Regex identifierRegex = {0, .expression = "[_]?[[:alpha:]][[:alnum:]_]*"};

@@ -6,6 +6,7 @@
 #include "parsingTable.h"
 #include "parserGeneratorUtils.h"
 #include "../tools/logger.h"
+#include "../memory.h"
 
 #define TOKEN_TYPES_COUNT 5
 

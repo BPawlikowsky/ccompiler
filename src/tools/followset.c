@@ -45,8 +45,8 @@ FollowSet *getFollowSet(int defIndex, GeneratorState *state) {
     return follow_set_history->arr_sets[defIndex];
   }
 
-  FollowSet *result = malloc(sizeof(FollowSet));
-  char **set = malloc(sizeof(char *) * 200);
+  FollowSet *result = get_memory(sizeof(FollowSet));
+  char **set = get_memory(sizeof(char *) * 200);
   result->itemCount = 0;
   result->set = set;
 
@@ -181,7 +181,7 @@ void addFirstSetToSet(FirstSet *firstSet, FollowSet *result) {
 }
 
 void addSingleItemToFollowSet(char *content, FollowSet *result) {
-  result->set[result->itemCount] = malloc(sizeof(char) * strlen(content) + 1);
+  result->set[result->itemCount] = get_memory(sizeof(char) * strlen(content) + 1);
   result->set[result->itemCount++] = content;
 }
 

@@ -4,7 +4,7 @@ int totalOverwrites = 0;
 
 ParsingTable *createParsingTable(GeneratorState *state) {
   // table initialization
-  ParsingTable *table = malloc(sizeof(ParsingTable));
+  ParsingTable *table = get_memory(sizeof(ParsingTable));
 
   table->terminals = state->terminals;
   table->nonterminals = state->nonterminals;
@@ -16,10 +16,10 @@ ParsingTable *createParsingTable(GeneratorState *state) {
   log_trace("terminals: %d, nonterminals: %d\n", table->terminalCount,
             table->nonterminalCount);
 
-  TableEntry **tab = malloc(sizeof(TableEntry) * table->tableSize);
+  TableEntry **tab = get_memory(sizeof(TableEntry) * table->tableSize);
 
   for (int i = 0; i < table->tableSize; i++) {
-    tab[i] = malloc(sizeof(TableEntry));
+    tab[i] = get_memory(sizeof(TableEntry));
     tab[i]->error = true;
   }
 
@@ -157,7 +157,7 @@ char *productionAsString(Production *prod) {
     string_size += prod->statements[i]->stringLength;
   }
 
-  char *result = malloc(sizeof(char) * string_size);
+  char *result = get_memory(sizeof(char) * string_size);
   for (int i = 0; i < prod->statementCount; i++) {
     sprintf(result, "%s %s", result, prod->statements[i]->content);
   }

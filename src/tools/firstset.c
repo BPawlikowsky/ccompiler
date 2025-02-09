@@ -31,15 +31,16 @@ void add_first_set_index(FirstSetIndexes *indexes, int index) {
 
 FirstSet *getFirstSet(int defIndex, GeneratorState *state) {
   log_debug("FirstSet(%d): Previous index: %d", defIndex, previous_index);
+  Definition *definition = state->definitions[defIndex];
   previous_index = defIndex;
 
-  int *arr = malloc(sizeof(int) * state->defCount);
+  int *arr = get_memory(sizeof(int) * state->defCount);
   FirstSetIndexes indexes = {.counter = 0, .arr = arr};
   FirstSetHistory *first_set_history = state->first_set_history;
 
-  if (*first_set_history->arr_visited_count[defIndex] > 100) {
+  if (*first_set_history->arr_visited_count[defIndex] > state->nonterminalCount) {
     log_error("Infinite Loop Error: FirstSet creation detected left "
-              "recurrsion, in \'%s\'");
+              "recurrsion, in \'%s\'", definition->name);
     exit(EXIT_FAILURE);
   }
   first_set_history->arr_visited_count[defIndex]++;
@@ -49,11 +50,10 @@ FirstSet *getFirstSet(int defIndex, GeneratorState *state) {
     return first_set_history->arr_sets[defIndex];
   }
 
-  char **set = malloc(sizeof(char *) * 200);
-  FirstSet *savedSet = malloc(sizeof(FirstSet));
+  char **set = get_memory(sizeof(char *) * 200);
+  FirstSet *savedSet = get_memory(sizeof(FirstSet));
   savedSet->itemCount = 0;
   savedSet->set = set;
-  Definition *definition = state->definitions[defIndex];
 
   // ADD CURRENT DEFINITION TO HISTORY
   first_set_history->arr_sets[defIndex] = savedSet;
@@ -203,6 +203,6 @@ void addFirstSetToFirstSet(FirstSet *firstSet, FirstSet *result) {
 }
 
 void addSingleItemToSet(char *content, FirstSet *result) {
-  result->set[result->itemCount] = malloc(sizeof(char) * strlen(content) + 1);
+  result->set[result->itemCount] = get_memory(sizeof(char) * strlen(content) + 1);
   result->set[result->itemCount++] = content;
 }
