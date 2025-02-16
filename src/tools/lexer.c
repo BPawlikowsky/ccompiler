@@ -63,6 +63,7 @@ int lexer(char *buffer, Token *tokens, Regex **lexicon, TokenType *tokenTypes,
 
 void copyResult(regoff_t sp, regoff_t ep, char *source, char *result) {
   int i = sp;
+  // strncpy(result, source, ep - sp);
   while (i < ep) {
     *result++ = source[i++];
   }
