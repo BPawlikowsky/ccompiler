@@ -14,8 +14,6 @@ const Set = struct {
 
 const string = []const u8;
 
-var buffer: [100000]u8 = undefined;
-
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
@@ -80,7 +78,7 @@ pub fn main() !void {
         }
     }
 
-    aa(firstsets, followsets);
+    firstFollowCheck(firstsets, followsets);
 }
 
 fn filter_list(list: std.ArrayList(string), allocator: std.mem.Allocator) !Set {
@@ -90,16 +88,19 @@ fn filter_list(list: std.ArrayList(string), allocator: std.mem.Allocator) !Set {
         const a = std.mem.eql(u8, item, " | ");
         const b = std.mem.containsAtLeast(u8, item, 1, "FirstSet");
         const c = std.mem.eql(u8, item, ":  ");
-        const d = (item.len != 0);
+        const d = (item.len > 1);
         if (!a and !b and !c and d) {
             try filtered_list.append(item);
         }
     }
-    const set = Set{ .name = filtered_list.items[0], .elements = filtered_list.items[1..] };
-    return set;
+    if (filtered_list.items.len > 0) {
+        const set = Set{ .name = filtered_list.items[0], .elements = filtered_list.items[1 .. filtered_list.items.len - 1] };
+        return set;
+    }
+    return Set{ .elements = &([_][]u8{""}), .name = "" };
 }
 
-fn aa(firstsets: std.ArrayList(Set), followsets: std.ArrayList(Set)) void {
+fn firstFollowCheck(firstsets: std.ArrayList(Set), followsets: std.ArrayList(Set)) void {
     for (firstsets.items) |firstset| {
         std.debug.print("{s}:\n", .{firstset.name});
         for (firstset.elements, 0..) |element, i| {
