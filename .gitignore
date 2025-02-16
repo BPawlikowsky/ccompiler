@@ -14,3 +14,4 @@ nonterminals.txt
 analyze
 *.zon
 *.o
+**/.zig-cache/**
