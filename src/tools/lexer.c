@@ -80,9 +80,12 @@ int compileRegex(Regex **lexicon, int count) {
     e = regcomp(&(lexiconItem->r), lexiconItem->expression, REG_EXTENDED);
     regerror(e, &(lexiconItem->r), error, LENGTH);
     int re_nsub = lexiconItem->r.re_nsub;
-    log_trace("lexicon[%d]: %s re_nsub: %d", i,
-              e == 0 ? "Sucessfully parsed regex!" : error, re_nsub);
+    if(e == 0) {
+    log_trace("lexicon[%d]: Sucessfully parsed regex!\n", i);
     log_trace("lexicon[%d]: expr: %s", i, lexiconItem->expression);
+    } else {
+      log_error("Error compiling regex[%d]: %s\n", i, error);
+    }
   }
 
   return e;
