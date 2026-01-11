@@ -1,17 +1,35 @@
-.vscode/**
+# excluded folders
+.vscode
 .DS_Store
-*.dSYM
-*.dSYM/**
-parserGenerator
+.uscope
+
+# local config files
 .clang-format
 .output
-./LL1Generator
-./LL1parser
+
+# C compilation files
+*.dSYM
+*.dSYM/**
+
+# executables
+parserGenerator
+LL1Generator
+LL1parser
+
+# testing files
 parsing-table-csv
 ptable.dat
 terminals.txt
 nonterminals.txt
+results.txt
+firstset.txt
+followset.txt
+
+# Zig
 analyze
-*.zon
 *.o
+.zig-cache
 **/.zig-cache/**
+
+# AI
+opencode.json

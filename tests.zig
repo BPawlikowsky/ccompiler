@@ -1,8 +1,5 @@
 const c_lib = @cImport({
-    @cInclude("./src/tools/lexer.h");
-    @cInclude("./src/types.h");
-    @cInclude("string.h");
-    @cInclude("regex.h");
+    @cInclude("/Users/bartsky/dev/c/ccompiler/src/tools/lexer.h");
 });
 const std = @import("std");
 const expect = std.testing.expect;

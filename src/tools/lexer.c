@@ -4,7 +4,7 @@ int lexer(char *buffer, Token *tokens, Regex **lexicon, TokenType *tokenTypes,
           int tokenTypeCount) {
   int tokenCount = 0;
   char *bp = buffer;
-  int STR_LENGTH = 10000;
+  int STR_LENGTH = 1000;
   char error[STR_LENGTH];
   int e;
   int offset = 0;

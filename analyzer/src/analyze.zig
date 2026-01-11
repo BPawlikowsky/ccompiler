@@ -26,7 +26,7 @@ pub fn main() !void {
     }
 
     // Load args
-    std.debug.print("len: {}", .{os.argv.len});
+    std.debug.print("len: {d}", .{os.argv.len});
     const firstset_filename: string = argv[1];
     const followset_filename: string = argv[2];
     const nonterminal_count: string = argv[3];
@@ -41,34 +41,34 @@ pub fn main() !void {
     // Read files to buffer
     const firstset = try firstset_file.readToEndAlloc(allocator, @sizeOf(string) * firstset_file_stats.size);
     const followset = try followset_file.readToEndAlloc(allocator, @sizeOf(string) * followset_file_stats.size);
-    std.debug.print("nonterminal count: {d}\n", .{nonterminal_count});
+    std.debug.print("nonterminal count: {s}\n", .{nonterminal_count});
 
     var firstset_lines_split = std.mem.splitSequence(u8, firstset, "\n");
     var followset_lines_split = std.mem.splitSequence(u8, followset, "\n");
 
-    var firstsets = std.ArrayList(Set).init(allocator);
-    var followsets = std.ArrayList(Set).init(allocator);
+    var firstsets = try std.ArrayList(Set).initCapacity(allocator, firstset.len);
+    var followsets = try std.ArrayList(Set).initCapacity(allocator, followset.len);
 
-    // construct fist sets
+    // construct first sets
     while (firstset_lines_split.next()) |line| {
-        var list = std.ArrayList(string).init(allocator);
+        var list = try std.ArrayList(string).initCapacity(allocator, 100);
         var split = std.mem.splitSequence(u8, line, "\'");
         while (split.next()) |terminal| {
-            try list.append(terminal);
+            try list.append(allocator, terminal);
         }
         const set_struct = filter_list(list, allocator);
-        try firstsets.append(try set_struct);
+        try firstsets.append(allocator, try set_struct);
     }
 
     // construct follow sets
     while (followset_lines_split.next()) |line| {
-        var list = std.ArrayList(string).init(allocator);
+        var list = try std.ArrayList(string).initCapacity(allocator, 100);
         var split = std.mem.splitSequence(u8, line, "\'");
         while (split.next()) |terminal| {
-            try list.append(terminal);
+            try list.append(allocator, terminal);
         }
         const set_struct = filter_list(list, allocator);
-        try followsets.append(try set_struct);
+        try followsets.append(allocator, try set_struct);
     }
 
     for (firstsets.items) |item| {
@@ -82,7 +82,7 @@ pub fn main() !void {
 }
 
 fn filter_list(list: std.ArrayList(string), allocator: std.mem.Allocator) !Set {
-    var filtered_list = std.ArrayList([]const u8).init(allocator);
+    var filtered_list = try std.ArrayList([]const u8).initCapacity(allocator, list.capacity);
 
     for (list.items) |item| {
         const a = std.mem.eql(u8, item, " | ");
@@ -90,14 +90,24 @@ fn filter_list(list: std.ArrayList(string), allocator: std.mem.Allocator) !Set {
         const c = std.mem.eql(u8, item, ":  ");
         const d = (item.len > 1);
         if (!a and !b and !c and d) {
-            try filtered_list.append(item);
+            try filtered_list.append(allocator, item);
         }
     }
+    std.log.debug("Items len: {d}", .{filtered_list.items.len});
     if (filtered_list.items.len > 0) {
-        const set = Set{ .name = filtered_list.items[0], .elements = filtered_list.items[1 .. filtered_list.items.len - 1] };
+        var set: Set = undefined;
+        if (filtered_list.items.len > 1) {
+            const elements = filtered_list.items[1 .. filtered_list.items.len - 1];
+            set = Set{ .name = filtered_list.items[0], .elements = elements };
+        } else {
+            const elements = filtered_list.items[0..];
+            set = Set{ .name = filtered_list.items[0], .elements = elements };
+        }
         return set;
     }
-    return Set{ .elements = &([_][]u8{""}), .name = "" };
+    const dummy = try allocator.alloc(string, 1);
+    dummy[0] = "";
+    return Set{ .elements = dummy, .name = "" };
 }
 
 fn firstFollowCheck(firstsets: std.ArrayList(Set), followsets: std.ArrayList(Set)) void {

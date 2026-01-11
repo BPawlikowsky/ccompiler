@@ -38,17 +38,20 @@ FirstSet *getFirstSet(int defIndex, GeneratorState *state) {
   FirstSetIndexes indexes = {.counter = 0, .arr = arr};
   FirstSetHistory *first_set_history = state->first_set_history;
 
-  if (*first_set_history->arr_visited_count[defIndex] > state->nonterminalCount) {
-    log_error("Infinite Loop Error: FirstSet creation detected left "
-              "recurrsion, in \'%s\'", definition->name);
-    exit(EXIT_FAILURE);
-  }
-  first_set_history->arr_visited_count[defIndex]++;
-
   // HANDLE REPEATING OPERATIONS
   if (isItemInHistory(state, defIndex, FIRSTSET)) {
     return first_set_history->arr_sets[defIndex];
   }
+
+  if (*first_set_history->arr_visited_count[defIndex] >
+      state->nonterminalCount) {
+    log_error("Infinite Loop Error: FirstSet creation detected left "
+              "recurrsion, in \'%s\' (visited %d times)",
+              definition->name,
+              *first_set_history->arr_visited_count[defIndex]);
+    exit(EXIT_FAILURE);
+  }
+  (*first_set_history->arr_visited_count[defIndex])++;
 
   char **set = get_memory(sizeof(char *) * 200);
   FirstSet *savedSet = get_memory(sizeof(FirstSet));
@@ -203,6 +206,7 @@ void addFirstSetToFirstSet(FirstSet *firstSet, FirstSet *result) {
 }
 
 void addSingleItemToSet(char *content, FirstSet *result) {
-  result->set[result->itemCount] = get_memory(sizeof(char) * strlen(content) + 1);
+  result->set[result->itemCount] =
+      get_memory(sizeof(char) * strlen(content) + 1);
   result->set[result->itemCount++] = content;
 }

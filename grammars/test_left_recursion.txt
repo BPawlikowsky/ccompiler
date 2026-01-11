@@ -1,0 +1,9 @@
+start:
+<p>E</p>
+
+E:
+<p>E + T</p>
+<p>T</p>
+
+T:
+<p>id</p>

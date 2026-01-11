@@ -53,28 +53,22 @@ FollowSet *getFollowSet(int defIndex, GeneratorState *state) {
   Definition *definition = state->definitions[defIndex];
 
   for (int i = 0; i < state->defCount; i++) {
-    if (i == defIndex) {
-      continue;
-    }
-
     for (int p = 0; p < state->definitions[i]->productionCount; p++) {
       Production *production = state->definitions[i]->productions[p];
       // GET INDEX OF CURRENT DEFINITION IN PRODUCTION
       int statementIndex = getStatementIndexFromProduction(
           definition, state->definitions[i]->productions[p]);
 
-      // IF DEFINITION IS NOT IN PRODUCION, OR IS THE SAME AS INVOKED
-      // DEFINITION, SKIP
+      // IF DEFINITION IS NOT IN PRODUCION, SKIP
       if (statementIndex < 0) {
         continue;
       }
 
       for (int s = statementIndex; s < production->statementCount; s++) {
-        Statement *nextStatement = production->statements[s + 1];
-
         if (s + 1 == production->statementCount) {
           break;
         }
+        Statement *nextStatement = production->statements[s + 1];
 
         // IF NEXT STATEMENT IS A TERMINAL,
         // ADD TO SET, AND GO TO NEXT PRODUCTION
@@ -92,7 +86,7 @@ FollowSet *getFollowSet(int defIndex, GeneratorState *state) {
           int newDefIndex = getDefinitionIndex(state, nextStatement->content);
 
           if (newDefIndex < 0) {
-            log_error("FollowSet(%d): could not find non-terminal \'%s\'.",
+            log_error("FollowSet(%d): could not find non-terminal '%s'.",
                       defIndex, nextStatement->content);
           }
           assert(newDefIndex > -1);
@@ -112,7 +106,9 @@ FollowSet *getFollowSet(int defIndex, GeneratorState *state) {
 
       if (statementIndex == production->statementCount - 1 ||
           canAllDeriveEpsilon(production, statementIndex + 1, state)) {
-        add_follow_set_index(&follow_set_indexes, i);
+        if (i != defIndex) {
+          add_follow_set_index(&follow_set_indexes, i);
+        }
       }
     }
   }
@@ -130,9 +126,8 @@ FollowSet *getFollowSet(int defIndex, GeneratorState *state) {
   }
 
   if (result->itemCount == 0) {
-    log_error("Error: FollowSet(%d) \'%s\' is empty.", defIndex,
-              definition->name);
-    assert(result->itemCount > 0);
+    log_warn("Warning: FollowSet(%d) '%s' is empty during calculation.",
+             defIndex, definition->name);
   }
 
   log_trace("Added Follow set(%d) created for %s", defIndex, definition->name);
@@ -181,7 +176,8 @@ void addFirstSetToSet(FirstSet *firstSet, FollowSet *result) {
 }
 
 void addSingleItemToFollowSet(char *content, FollowSet *result) {
-  result->set[result->itemCount] = get_memory(sizeof(char) * strlen(content) + 1);
+  result->set[result->itemCount] =
+      get_memory(sizeof(char) * strlen(content) + 1);
   result->set[result->itemCount++] = content;
 }
 

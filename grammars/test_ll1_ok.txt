@@ -1,0 +1,9 @@
+start:
+<p>A B</p>
+
+A:
+<p>a</p>
+<p>epsilon</p>
+
+B:
+<p>b</p>

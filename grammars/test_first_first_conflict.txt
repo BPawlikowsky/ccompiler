@@ -1,0 +1,12 @@
+start:
+<p>A</p>
+
+A:
+<p>b C</p>
+<p>b D</p>
+
+C:
+<p>c</p>
+
+D:
+<p>d</p>
