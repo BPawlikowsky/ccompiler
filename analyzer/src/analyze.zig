@@ -1,35 +1,44 @@
 const std = @import("std");
 const os = std.os;
 const fs = std.fs;
+const String = []const u8;
+
+// Init IO
+const init = std.process.Init.init();
+const io = init.io;
+var stdout_writer = std.Io.File.stdout().writer(io, &.{});
+const stdout = &stdout_writer.interface;
+const print = stdout.print;
 
 const Set = struct {
-    name: string,
-    elements: []string,
-    fn init(self: std.Self, list: std.ArrayList(string)) std.Self {
+    name: String,
+    elements: []String,
+    fn init(self: std.Self, list: std.ArrayList(String)) std.Self {
         self.name = list.items[0];
         self.elements = list.items[1..];
         return self;
     }
 };
 
-const string = []const u8;
-
 pub fn main() !void {
+
+    // Setup allocator
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
 
     const allocator = arena.allocator();
     const argv = try std.process.argsAlloc(allocator);
 
-    if (argv.len < 1) {
-        std.debug.print("Too few arguments...", .{});
+    if (argv.len < 4) {
+        print("Too few arguments...", .{});
+        print("Too few arguments...", .{});
     }
 
     // Load args
-    std.debug.print("len: {d}", .{os.argv.len});
-    const firstset_filename: string = argv[1];
-    const followset_filename: string = argv[2];
-    const nonterminal_count: string = argv[3];
+    print("len: {d}", .{os.argv.len});
+    const firstset_filename: String = argv[1];
+    const followset_filename: String = argv[2];
+    const nonterminal_count: String = argv[3];
 
     // Load files
     const dir = fs.cwd();
@@ -39,9 +48,9 @@ pub fn main() !void {
     const followset_file_stats = try followset_file.stat();
 
     // Read files to buffer
-    const firstset = try firstset_file.readToEndAlloc(allocator, @sizeOf(string) * firstset_file_stats.size);
-    const followset = try followset_file.readToEndAlloc(allocator, @sizeOf(string) * followset_file_stats.size);
-    std.debug.print("nonterminal count: {s}\n", .{nonterminal_count});
+    const firstset = try firstset_file.readToEndAlloc(allocator, @sizeOf(String) * firstset_file_stats.size);
+    const followset = try followset_file.readToEndAlloc(allocator, @sizeOf(String) * followset_file_stats.size);
+    print("nonterminal count: {s}\n", .{nonterminal_count});
 
     var firstset_lines_split = std.mem.splitSequence(u8, firstset, "\n");
     var followset_lines_split = std.mem.splitSequence(u8, followset, "\n");
@@ -51,7 +60,7 @@ pub fn main() !void {
 
     // construct first sets
     while (firstset_lines_split.next()) |line| {
-        var list = try std.ArrayList(string).initCapacity(allocator, 100);
+        var list = try std.ArrayList(String).initCapacity(allocator, 100);
         var split = std.mem.splitSequence(u8, line, "\'");
         while (split.next()) |terminal| {
             try list.append(allocator, terminal);
@@ -62,7 +71,7 @@ pub fn main() !void {
 
     // construct follow sets
     while (followset_lines_split.next()) |line| {
-        var list = try std.ArrayList(string).initCapacity(allocator, 100);
+        var list = try std.ArrayList(String).initCapacity(allocator, 100);
         var split = std.mem.splitSequence(u8, line, "\'");
         while (split.next()) |terminal| {
             try list.append(allocator, terminal);
@@ -72,16 +81,16 @@ pub fn main() !void {
     }
 
     for (firstsets.items) |item| {
-        std.debug.print("\n{s}\n", .{item.name});
+        print("\n{s}\n", .{item.name});
         for (item.elements) |terminal| {
-            std.debug.print("{s}, ", .{terminal});
+            print("{s}, ", .{terminal});
         }
     }
 
     firstFollowCheck(firstsets, followsets);
 }
 
-fn filter_list(list: std.ArrayList(string), allocator: std.mem.Allocator) !Set {
+fn filter_list(list: std.ArrayList(String), allocator: std.mem.Allocator) !Set {
     var filtered_list = try std.ArrayList([]const u8).initCapacity(allocator, list.capacity);
 
     for (list.items) |item| {
@@ -93,7 +102,7 @@ fn filter_list(list: std.ArrayList(string), allocator: std.mem.Allocator) !Set {
             try filtered_list.append(allocator, item);
         }
     }
-    std.log.debug("Items len: {d}", .{filtered_list.items.len});
+    print("Items len: {d}", .{filtered_list.items.len});
     if (filtered_list.items.len > 0) {
         var set: Set = undefined;
         if (filtered_list.items.len > 1) {
@@ -105,21 +114,21 @@ fn filter_list(list: std.ArrayList(string), allocator: std.mem.Allocator) !Set {
         }
         return set;
     }
-    const dummy = try allocator.alloc(string, 1);
+    const dummy = try allocator.alloc(String, 1);
     dummy[0] = "";
     return Set{ .elements = dummy, .name = "" };
 }
 
 fn firstFollowCheck(firstsets: std.ArrayList(Set), followsets: std.ArrayList(Set)) void {
     for (firstsets.items) |firstset| {
-        std.debug.print("{s}:\n", .{firstset.name});
+        print("{s}:\n", .{firstset.name});
         for (firstset.elements, 0..) |element, i| {
             const be = for (followsets.items[i].elements) |value| {
                 if (std.mem.eql(u8, element, value)) {
                     break true;
                 }
             } else false;
-            std.debug.print("{s}({d}): {}\n", .{ element, element.len, be });
+            print("{s}({d}): {}\n", .{ element, element.len, be });
         }
     }
 }
